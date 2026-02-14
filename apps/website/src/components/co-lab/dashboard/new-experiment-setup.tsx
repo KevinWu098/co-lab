@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ProcedureEditor } from "@/components/co-lab/dashboard/procedure-editor";
 import {
   Accordion,
   AccordionContent,
@@ -130,7 +131,7 @@ export function NewExperimentSetup({ onCancel }: { onCancel?: () => void }) {
             initial={{ opacity: 0, x: 80 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.35, ease }}
-            className="bg-background flex w-xl shrink-0 flex-col border"
+            className="bg-background flex w-2xl shrink-0 flex-col border"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b px-4 py-3">
@@ -249,11 +250,7 @@ export function NewExperimentSetup({ onCancel }: { onCancel?: () => void }) {
           </AccordionTrigger>
           <AccordionContent className="flex min-h-0 flex-1 flex-col p-0">
             <div className="flex min-h-0 flex-1 border-t">
-              <div className="min-h-0 flex-1 p-4">
-                <div className="text-muted-foreground flex h-full items-center justify-center rounded border border-dashed font-mono text-sm">
-                  Procedure editor
-                </div>
-              </div>
+              <ProcedureEditor sourceFile={file} />
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -285,6 +282,7 @@ export function NewExperimentSetup({ onCancel }: { onCancel?: () => void }) {
           variant="ghost"
           size="sm"
           onClick={() => {
+            setFile(null);
             setStep(null);
             onCancel?.();
           }}
