@@ -1,63 +1,23 @@
 import { FlaskConicalIcon } from "lucide-react";
 import type * as React from "react";
 import { Pulse } from "@/components/co-lab/pulse";
+import { ContentToggle } from "@/components/dashboard/content-toggle";
+import { experiments } from "@/components/dashboard/sidebar/data";
+import { ExperimentGroup } from "@/components/dashboard/sidebar/experiment-group";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 
-const data = {
-  navMain: [
-    {
-      title: "Getting Started",
-      url: "#",
-      items: [
-        {
-          title: "Installation",
-          url: "#",
-        },
-        {
-          title: "Project Structure",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Build Your Application",
-      url: "#",
-      items: [
-        {
-          title: "Routing",
-          url: "#",
-        },
-        {
-          title: "Data Fetching",
-          url: "#",
-          isActive: true,
-        },
-        {
-          title: "Rendering",
-          url: "#",
-        },
-        {
-          title: "Caching",
-          url: "#",
-        },
-      ],
-    },
-  ],
-};
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const active = experiments.filter((e) => e.status === "running" || e.status === "waiting");
+  const inactive = experiments.filter((e) => e.status === "idle");
+
   return (
     <Sidebar variant="floating" {...props}>
       <SidebarHeader className="border-b">
@@ -77,36 +37,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu className="gap-2">
-            {data.navMain.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <a className="font-medium" href={item.url}>
-                    {item.title}
-                  </a>
-                </SidebarMenuButton>
-                {item.items?.length ? (
-                  <SidebarMenuSub className="ml-0 border-l-0 px-1.5">
-                    {item.items.map((item) => (
-                      <SidebarMenuSubItem key={item.title}>
-                        <SidebarMenuSubButton asChild isActive={item.isActive}>
-                          <a href={item.url}>{item.title}</a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                ) : null}
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        <ExperimentGroup label="Active" experiments={active} />
+        <ExperimentGroup label="Inactive" experiments={inactive} active={false} />
       </SidebarContent>
+
       <SidebarFooter className="border-t">
-        <div className="flex items-center space-x-2 p-2">
-          <Pulse />
-          <span className="font-mono text-sm">All systems operational</span>
+        <div className="flex items-center justify-between p-2">
+          <div className="flex items-center space-x-2">
+            <Pulse variant="running" />
+            <span className="font-mono text-sm">All systems operational</span>
+          </div>
+
+          <ContentToggle />
         </div>
       </SidebarFooter>
     </Sidebar>
