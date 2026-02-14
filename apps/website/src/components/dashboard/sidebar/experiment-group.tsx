@@ -1,4 +1,8 @@
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+} from "@/components/ui/sidebar";
 import { ExperimentItem } from "./experiment-item";
 import type { Experiment } from "./types";
 
@@ -13,20 +17,22 @@ export function ExperimentGroup({
   active?: boolean;
   defaultFirstSelected?: boolean;
 }) {
-  if (experiments.length === 0) return null;
+  if (experiments.length === 0) {
+    return null;
+  }
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="font-mono text-[0.65rem] tracking-widest uppercase">
+      <SidebarGroupLabel className="font-mono text-[0.65rem] uppercase tracking-widest">
         {label}
       </SidebarGroupLabel>
       <SidebarMenu>
         {experiments.map((exp, i) => (
           <ExperimentItem
-            key={exp.id}
-            experiment={exp}
             active={active}
             defaultSelected={defaultFirstSelected && i === 0}
+            experiment={exp}
+            key={exp.id}
           />
         ))}
       </SidebarMenu>

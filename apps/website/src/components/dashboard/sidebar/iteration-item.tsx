@@ -12,15 +12,15 @@ export function IterationItem({ experimentId, iteration }: IterationItemProps) {
     <SidebarMenuItem>
       <SidebarMenuButton asChild className="h-fit pl-8">
         <Link
-          href={`/dashboard/${experimentId}/${iteration.id}`}
           className="items-start gap-2"
+          href={`/dashboard/${experimentId}/${iteration.id}`}
         >
-          <span className="text-muted-foreground mt-px shrink-0 font-mono text-[0.6rem]">
+          <span className="mt-px shrink-0 font-mono text-[0.6rem] text-muted-foreground">
             #{iteration.number}
           </span>
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-xs">{iteration.summary}</span>
-            <span className="text-muted-foreground font-mono text-[0.6rem]">
+            <span className="font-mono text-[0.6rem] text-muted-foreground">
               {iteration.createdAt}
             </span>
           </div>

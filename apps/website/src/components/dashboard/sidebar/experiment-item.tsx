@@ -13,7 +13,11 @@ interface ExperimentItemProps {
   defaultSelected?: boolean;
 }
 
-export function ExperimentItem({ experiment, active = true, defaultSelected = false }: ExperimentItemProps) {
+export function ExperimentItem({
+  experiment,
+  active = true,
+  defaultSelected = false,
+}: ExperimentItemProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isSelected =
@@ -37,12 +41,14 @@ export function ExperimentItem({ experiment, active = true, defaultSelected = fa
         >
           <div className="flex items-start gap-0">
             <Pulse
-              variant={active ? experiment.status : "inactive"}
               className="mt-0.5 shrink-0"
+              variant={active ? experiment.status : "inactive"}
             />
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-medium">{experiment.title}</span>
-              <span className="text-muted-foreground font-mono text-[0.65rem]">
+              <span className="truncate font-medium text-sm">
+                {experiment.title}
+              </span>
+              <span className="font-mono text-[0.65rem] text-muted-foreground">
                 {statusLabel[experiment.status]} · {experiment.updatedAt}
               </span>
             </div>

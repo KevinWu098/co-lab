@@ -28,13 +28,17 @@ export default function RootLayout({
       <head>
         {process.env.NODE_ENV === "development" && (
           <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
             crossOrigin="anonymous"
+            src="//unpkg.com/react-grab/dist/index.global.js"
             strategy="beforeInteractive"
           />
         )}
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

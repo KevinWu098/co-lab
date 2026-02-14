@@ -31,9 +31,19 @@ export function Pulse({
   const styles = variantStyles[variant];
 
   return (
-    <div className={cn("relative flex size-5 items-center justify-center p-1", className)}>
+    <div
+      className={cn(
+        "relative flex size-5 items-center justify-center p-1",
+        className
+      )}
+    >
       {styles.ping && (
-        <div className={cn("absolute size-2.5 rounded-full opacity-75", styles.ping)} />
+        <div
+          className={cn(
+            "absolute size-2.5 rounded-full opacity-75",
+            styles.ping
+          )}
+        />
       )}
       <div className={cn("size-2.5 rounded-full", styles.dot)} />
     </div>

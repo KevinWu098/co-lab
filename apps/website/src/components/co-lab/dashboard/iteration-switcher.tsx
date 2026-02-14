@@ -21,17 +21,19 @@ export function IterationSwitcher({ experiment }: IterationSwitcherProps) {
 
   const [selected, setSelected] = useState(iterations[0]?.id ?? "");
 
-  if (iterations.length === 0) return null;
+  if (iterations.length === 0) {
+    return null;
+  }
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center">
-        <div className="bg-background flex h-9 items-center rounded-l-md border px-3 text-sm font-medium">
+        <div className="flex h-9 items-center rounded-l-md border bg-background px-3 font-medium text-sm">
           {experiment.title}
         </div>
 
-        <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="bg-background rounded-l-none border-l-0 px-2 [&>span]:hidden">
+        <Select onValueChange={setSelected} value={selected}>
+          <SelectTrigger className="rounded-l-none border-l-0 bg-background px-2 [&>span]:hidden">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -44,7 +46,7 @@ export function IterationSwitcher({ experiment }: IterationSwitcherProps) {
         </Select>
       </div>
 
-      <Button variant="outline" size="sm">
+      <Button size="sm" variant="outline">
         <PlusIcon />
         New iteration
       </Button>

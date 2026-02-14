@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, type ReactNode, useContext, useState } from "react";
 
 type ContentVisibilityContext = {
   visible: boolean;
@@ -8,14 +8,14 @@ type ContentVisibilityContext = {
 };
 
 const ContentVisibilityContext = createContext<ContentVisibilityContext | null>(
-  null,
+  null
 );
 
 export function useContentVisibility() {
   const ctx = useContext(ContentVisibilityContext);
   if (!ctx) {
     throw new Error(
-      "useContentVisibility must be used within ContentVisibilityProvider",
+      "useContentVisibility must be used within ContentVisibilityProvider"
     );
   }
   return ctx;

@@ -14,21 +14,21 @@ export default function Page() {
         <div className="grid grid-cols-3">
           <DataCard
             title="Temperature"
-            values={[36.8, 36.9, 37.0, 37.1, 36.9, 37.0, 37.1, 37.2]}
             unit="°C"
+            values={[36.8, 36.9, 37.0, 37.1, 36.9, 37.0, 37.1, 37.2]}
           />
           <DataCard
             title="Pressure"
-            values={[1.015, 1.014, 1.014, 1.013, 1.012, 1.013]}
             unit="atm"
+            values={[1.015, 1.014, 1.014, 1.013, 1.012, 1.013]}
           />
-          <DataCard title="pH Level" values={[7.2, 7.3, 7.3, 7.4, 7.4]} unit="pH" last />
+          <DataCard last title="pH Level" unit="pH" values={[7.2, 7.3, 7.3, 7.4, 7.4]} />
         </div>
 
         <div className="bg-background">CAMERA FEED</div>
       </div>
 
-      <div className="bg-background h-full w-xs">
+      <div className="bg-background h-full">
         <Chat />
       </div>
     </div>

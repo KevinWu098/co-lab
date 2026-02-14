@@ -1,32 +1,28 @@
 "use client";
 
+import { useChat } from "@ai-sdk/react";
+import { BeakerIcon } from "lucide-react";
+import { useState } from "react";
 import {
   Conversation,
   ConversationContent,
   ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
+import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
   PromptInput,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
-import { useChat } from "@ai-sdk/react";
-import { FlaskConicalIcon } from "lucide-react";
-import { useState } from "react";
 
 export function Chat() {
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, stop } = useChat();
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full w-xs flex-col">
       <div className="border-b px-4 py-3">
         <h2 className="font-sans text-sm font-medium">Lab Assistant</h2>
       </div>
@@ -35,8 +31,8 @@ export function Chat() {
         {messages.length === 0 ? (
           <ConversationEmptyState
             description="Ask about your experiment data, lab conditions, or analysis."
-            icon={<FlaskConicalIcon className="size-6" />}
-            title="Lab Assistant"
+            icon={<BeakerIcon className="size-6" />}
+            title="Co:Lab Assistant"
           />
         ) : (
           <ConversationContent className="gap-4 p-3">
@@ -48,9 +44,7 @@ export function Chat() {
                     switch (part.type) {
                       case "text":
                         return message.role === "assistant" ? (
-                          <MessageResponse key={key}>
-                            {part.text}
-                          </MessageResponse>
+                          <MessageResponse key={key}>{part.text}</MessageResponse>
                         ) : (
                           <p key={key}>{part.text}</p>
                         );

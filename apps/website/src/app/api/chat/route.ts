@@ -1,9 +1,4 @@
-import {
-  type UIMessage,
-  convertToModelMessages,
-  stepCountIs,
-  streamText,
-} from "ai";
+import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from "ai";
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();

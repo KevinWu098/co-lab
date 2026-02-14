@@ -5,7 +5,9 @@ import { ContentWrapper } from "@/components/dashboard/content-wrapper";
 import { SidebarOpacity } from "@/components/dashboard/sidebar-opacity";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function Layout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <ContentVisibilityProvider>
       <div className="h-svh overflow-y-hidden overscroll-y-none">

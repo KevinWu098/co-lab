@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const active = experiments.filter((e) => e.status === "running" || e.status === "waiting");
+  const active = experiments.filter(
+    (e) => e.status === "running" || e.status === "waiting"
+  );
   const inactive = experiments.filter((e) => e.status === "idle");
 
   return (
@@ -25,11 +27,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
               <a href="/dashboard">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <FlaskConicalIcon className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-mono font-medium">Co:Lab</span>
+                  <span className="font-medium font-mono">Co:Lab</span>
                   <span className="text-xs">v2.15.26</span>
                 </div>
               </a>
@@ -39,8 +41,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <ExperimentGroup label="Active" experiments={active} defaultFirstSelected />
-        <ExperimentGroup label="Inactive" experiments={inactive} active={false} />
+        <ExperimentGroup
+          defaultFirstSelected
+          experiments={active}
+          label="Active"
+        />
+        <ExperimentGroup
+          active={false}
+          experiments={inactive}
+          label="Inactive"
+        />
       </SidebarContent>
 
       <SidebarFooter className="border-t">

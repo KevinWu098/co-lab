@@ -9,16 +9,16 @@ export function ContentToggle() {
 
   return (
     <Button
-      variant="ghost"
-      size="icon"
+      aria-label={visible ? "Hide content" : "Show content"}
       className="size-7"
       onClick={toggle}
-      aria-label={visible ? "Hide content" : "Show content"}
+      size="icon"
+      variant="ghost"
     >
       {visible ? (
-        <ImageIcon className="text-muted-foreground size-4" />
+        <ImageIcon className="size-4 text-muted-foreground" />
       ) : (
-        <ImageOffIcon className="text-muted-foreground size-4" />
+        <ImageOffIcon className="size-4 text-muted-foreground" />
       )}
     </Button>
   );
