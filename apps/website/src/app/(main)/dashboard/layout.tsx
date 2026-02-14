@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Background } from "@/components/co-lab/dashboard/background";
 import { ContentVisibilityProvider } from "@/components/dashboard/content-visibility";
 import { ContentWrapper } from "@/components/dashboard/content-wrapper";
+import { SidebarOpacity } from "@/components/dashboard/sidebar-opacity";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -15,7 +16,9 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
             } as React.CSSProperties
           }
         >
-          <AppSidebar />
+          <SidebarOpacity>
+            <AppSidebar />
+          </SidebarOpacity>
           <SidebarInset className="bg-transparent">
             <ContentWrapper>{children}</ContentWrapper>
           </SidebarInset>
