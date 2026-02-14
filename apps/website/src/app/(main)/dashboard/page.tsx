@@ -1,3 +1,4 @@
+import { Chat } from "@/components/co-lab/dashboard/chat";
 import { DataCard } from "@/components/co-lab/dashboard/data-card";
 
 export default function Page() {
@@ -21,7 +22,9 @@ export default function Page() {
         <div className="bg-background">CAMERA FEED</div>
       </div>
 
-      <div className="bg-background h-full w-xs">CHAT</div>
+      <div className="bg-background h-full w-xs">
+        <Chat />
+      </div>
     </div>
   );
 }
