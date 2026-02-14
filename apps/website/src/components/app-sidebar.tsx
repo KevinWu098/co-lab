@@ -1,9 +1,13 @@
-import { FlaskConicalIcon } from "lucide-react";
+"use client";
+
+import { FlaskConicalIcon, PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type * as React from "react";
 import { Pulse } from "@/components/co-lab/pulse";
 import { ContentToggle } from "@/components/dashboard/content-toggle";
-import { experiments } from "@/components/dashboard/sidebar/data";
+import { useExperiments } from "@/components/dashboard/experiments-provider";
 import { ExperimentGroup } from "@/components/dashboard/sidebar/experiment-group";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -14,9 +18,26 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+let experimentCounter = 7;
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter();
+  const { experiments, addExperiment } = useExperiments();
   const active = experiments.filter((e) => e.status === "running" || e.status === "waiting");
   const inactive = experiments.filter((e) => e.status === "idle");
+
+  const handleNewExperiment = () => {
+    const id = `exp-${String(experimentCounter).padStart(3, "0")}`;
+    experimentCounter++;
+    addExperiment({
+      id,
+      title: "Untitled experiment",
+      status: "waiting",
+      updatedAt: "just now",
+      iterations: [],
+    });
+    router.push(`/dashboard/experiment/${id}`);
+  };
 
   return (
     <Sidebar variant="floating" {...props}>
@@ -39,7 +60,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <ExperimentGroup defaultFirstSelected experiments={active} label="Active" />
+        <div className="px-3 pt-3">
+          <Button variant="outline" size="sm" className="w-full cursor-pointer" onClick={handleNewExperiment}>
+            <PlusIcon />
+            New experiment
+          </Button>
+        </div>
+        <ExperimentGroup experiments={active} label="Active" />
         <ExperimentGroup active={false} experiments={inactive} label="Inactive" />
       </SidebarContent>
 

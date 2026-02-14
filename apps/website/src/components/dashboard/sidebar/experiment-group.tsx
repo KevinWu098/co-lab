@@ -1,8 +1,4 @@
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-} from "@/components/ui/sidebar";
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
 import { ExperimentItem } from "./experiment-item";
 import type { Experiment } from "./types";
 
@@ -23,7 +19,7 @@ export function ExperimentGroup({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="font-mono text-[0.65rem] uppercase tracking-widest">
+      <SidebarGroupLabel className="font-mono text-[0.65rem] tracking-widest uppercase">
         {label}
       </SidebarGroupLabel>
       <SidebarMenu>

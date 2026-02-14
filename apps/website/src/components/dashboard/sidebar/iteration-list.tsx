@@ -25,9 +25,7 @@ export function IterationList({
     return null;
   }
 
-  const isOnSpecificIteration = iterations.some(
-    (it) => pathname === `/dashboard/${experimentId}/${it.id}`,
-  );
+  const isOnSpecificIteration = pathname === `/dashboard/experiment/${experimentId}`;
   const latestId = iterations[0].id;
 
   const visible = expanded ? iterations : iterations.slice(0, ABOVE_FOLD);
@@ -40,10 +38,7 @@ export function IterationList({
           key={it.id}
           experimentId={experimentId}
           iteration={it}
-          isActive={isOnSpecificIteration
-            ? pathname === `/dashboard/${experimentId}/${it.id}`
-            : it.id === latestId
-          }
+          isActive={isOnSpecificIteration && it.id === latestId}
         />
       ))}
       {hasMore && !expanded && (

@@ -20,14 +20,14 @@ export function ExperimentItem({
 }: ExperimentItemProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const experimentPath = `/dashboard/experiment/${experiment.id}`;
   const isSelected =
-    pathname.startsWith(`/dashboard/${experiment.id}`) ||
+    pathname.startsWith(experimentPath) ||
     (defaultSelected && pathname === "/dashboard");
 
   const handleClick = () => {
-    if (!isSelected && experiment.iterations.length > 0) {
-      const latest = experiment.iterations[0];
-      router.push(`/dashboard/${experiment.id}/${latest.id}`);
+    if (!isSelected) {
+      router.push(experimentPath);
     }
   };
 

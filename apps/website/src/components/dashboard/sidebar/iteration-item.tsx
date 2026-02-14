@@ -14,7 +14,7 @@ export function IterationItem({ experimentId, iteration, isActive }: IterationIt
       <SidebarMenuButton asChild className="h-fit pl-8" isActive={isActive}>
         <Link
           className="items-start gap-2"
-          href={`/dashboard/${experimentId}/${iteration.id}`}
+          href={`/dashboard/experiment/${experimentId}`}
         >
           <span className="mt-px shrink-0 font-mono text-[0.6rem] text-muted-foreground">
             #{iteration.number}

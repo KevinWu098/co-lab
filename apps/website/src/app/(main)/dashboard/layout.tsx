@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Background } from "@/components/co-lab/dashboard/background";
 import { ContentVisibilityProvider } from "@/components/dashboard/content-visibility";
 import { ContentWrapper } from "@/components/dashboard/content-wrapper";
+import { ExperimentsProvider } from "@/components/dashboard/experiments-provider";
 import { SidebarOpacity } from "@/components/dashboard/sidebar-opacity";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -9,6 +10,7 @@ export default function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
+    <ExperimentsProvider>
     <ContentVisibilityProvider>
       <div className="h-svh overflow-y-hidden overscroll-y-none">
         <SidebarProvider
@@ -28,5 +30,6 @@ export default function Layout({
         <Background />
       </div>
     </ContentVisibilityProvider>
+    </ExperimentsProvider>
   );
 }
