@@ -145,7 +145,7 @@
     @apply min-w-0;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     -webkit-font-smoothing: antialiased;
   }
 }
