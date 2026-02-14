@@ -1,3 +1,4 @@
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Background } from "@/components/co-lab/dashboard/background";
 import { ContentVisibilityProvider } from "@/components/dashboard/content-visibility";
@@ -10,6 +11,7 @@ export default function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
+    <NuqsAdapter>
     <ExperimentsProvider>
     <ContentVisibilityProvider>
       <div className="h-svh overflow-y-hidden overscroll-y-none">
@@ -31,5 +33,6 @@ export default function Layout({
       </div>
     </ContentVisibilityProvider>
     </ExperimentsProvider>
+    </NuqsAdapter>
   );
 }
