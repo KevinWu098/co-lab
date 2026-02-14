@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Page() {
   return (
-    <div className="flex flex-1 flex-row gap-4 p-4">
+    <div className="flex flex-1 flex-row gap-4 py-4">
       <div className="flex w-full flex-1 flex-col gap-4">
         <div className="grid grid-cols-3">
           <Card className="bg-background gap-0">

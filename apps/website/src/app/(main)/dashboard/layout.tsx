@@ -11,7 +11,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
         <SidebarProvider
           style={
             {
-              "--sidebar-width": "19rem",
+              "--sidebar-width": "20rem",
             } as React.CSSProperties
           }
         >
