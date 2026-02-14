@@ -1,9 +1,15 @@
 import { DataCard } from "@/components/co-lab/dashboard/data-card";
+import { IterationSwitcher } from "@/components/co-lab/dashboard/iteration-switcher";
+import { experiments } from "@/components/dashboard/sidebar/data";
 
 export default function Page() {
+  const experiment = experiments[0];
+
   return (
     <div className="flex flex-1 flex-row gap-4 py-4">
       <div className="flex w-full flex-1 flex-col gap-4">
+        <IterationSwitcher experiment={experiment} />
+
         <div className="grid grid-cols-3">
           <DataCard
             title="Temperature"
