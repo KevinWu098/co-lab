@@ -6,10 +6,12 @@ export function ExperimentGroup({
   label,
   experiments,
   active = true,
+  defaultFirstSelected = false,
 }: {
   label: string;
   experiments: Experiment[];
   active?: boolean;
+  defaultFirstSelected?: boolean;
 }) {
   if (experiments.length === 0) return null;
 
@@ -19,8 +21,13 @@ export function ExperimentGroup({
         {label}
       </SidebarGroupLabel>
       <SidebarMenu>
-        {experiments.map((exp) => (
-          <ExperimentItem key={exp.id} experiment={exp} active={active} />
+        {experiments.map((exp, i) => (
+          <ExperimentItem
+            key={exp.id}
+            experiment={exp}
+            active={active}
+            defaultSelected={defaultFirstSelected && i === 0}
+          />
         ))}
       </SidebarMenu>
     </SidebarGroup>

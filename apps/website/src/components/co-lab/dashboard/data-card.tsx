@@ -31,8 +31,9 @@ export function DataCard({
   last: isLast = false,
   className,
 }: DataCardProps) {
-  const current = values[values.length - 1] ?? 0;
-  const trend = computeTrend(values, window);
+  const hasData = values.length > 0;
+  const current = hasData ? values[values.length - 1] : null;
+  const trend = hasData ? computeTrend(values, window) : null;
 
   return (
     <Card className={cn("bg-background gap-2", !isLast && "border-r-0", className)}>
@@ -40,10 +41,14 @@ export function DataCard({
         <CardTitle className="font-sans">{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-between">
-        <div>
-          <span className="font-mono text-2xl">{current}</span>{" "}
-          <span className="text-muted-foreground font-sans text-base">{unit}</span>
-        </div>
+        {hasData ? (
+          <div>
+            <span className="font-mono text-2xl">{current}</span>{" "}
+            <span className="text-muted-foreground font-sans text-base">{unit}</span>
+          </div>
+        ) : (
+          <span className="text-muted-foreground font-mono text-2xl">N/A</span>
+        )}
         {trend && (
           <div
             className={cn(

@@ -39,7 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <ExperimentGroup label="Active" experiments={active} />
+        <ExperimentGroup label="Active" experiments={active} defaultFirstSelected />
         <ExperimentGroup label="Inactive" experiments={inactive} active={false} />
       </SidebarContent>
 
