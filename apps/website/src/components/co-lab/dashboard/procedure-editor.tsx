@@ -21,6 +21,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  type Action,
   computeAllSpins,
   type DraftAction,
   type DraftDispense,
@@ -69,8 +70,15 @@ function createDefaultAction(type: DraftAction["type"]): DraftAction {
 
 // ── Main editor ────────────────────────────────────────────────────────────
 
-export function ProcedureEditor({ sourceFile }: { sourceFile?: File | null }) {
+export function ProcedureEditor({
+  sourceFile,
+  initialSteps,
+}: {
+  sourceFile?: File | null;
+  initialSteps?: Action[] | null;
+}) {
   const [steps, setSteps] = useState<ProcedureStep[]>([]);
+  const initializedRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -87,6 +95,19 @@ export function ProcedureEditor({ sourceFile }: { sourceFile?: File | null }) {
     setSourceUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [sourceFile]);
+
+  // Populate steps from agent output
+  useEffect(() => {
+    if (initialSteps && !initializedRef.current) {
+      initializedRef.current = true;
+      setSteps(
+        initialSteps.map((action) => ({
+          id: nanoid(8),
+          action,
+        })),
+      );
+    }
+  }, [initialSteps]);
 
   const spinMap = useMemo(() => computeAllSpins(steps), [steps]);
 
@@ -146,7 +167,7 @@ export function ProcedureEditor({ sourceFile }: { sourceFile?: File | null }) {
   );
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full overflow-hidden">
       {/* ── Step list ── */}
       {/* biome-ignore lint/a11y/useSemanticElements: drop target region */}
       <div
@@ -162,7 +183,7 @@ export function ProcedureEditor({ sourceFile }: { sourceFile?: File | null }) {
             <DialogTrigger asChild>
               <button
                 type="button"
-                className="bg-muted/30 hover:bg-muted/50 flex shrink-0 cursor-pointer items-center gap-2 border-b px-3 py-2 transition-colors"
+                className="bg-muted/30 hover:bg-muted/50 flex shrink-0 cursor-pointer items-center gap-2 border-b px-4 py-2 transition-colors"
               >
                 <FileTextIcon className="text-muted-foreground size-3.5 shrink-0" />
                 <span className="flex-1 truncate text-left font-mono text-xs">
@@ -212,7 +233,7 @@ export function ProcedureEditor({ sourceFile }: { sourceFile?: File | null }) {
             )}
           </div>
         ) : (
-          <div className="flex flex-col p-3">
+          <div className="flex h-0 flex-col p-4">
             {steps.map((step, index) => (
               <StepCard
                 key={step.id}
@@ -244,7 +265,7 @@ export function ProcedureEditor({ sourceFile }: { sourceFile?: File | null }) {
       </div>
 
       {/* ── Action palette ── */}
-      <div className="flex w-md shrink-0 flex-col gap-2 border-l p-2">
+      <div className="flex w-md shrink-0 flex-col gap-2 border-l p-4">
         <span className="text-muted-foreground px-1 font-mono text-[10px] tracking-widest uppercase">
           Actions
         </span>
@@ -295,7 +316,7 @@ function StepCard({
   return (
     <div className="bg-background group border-x border-t first:rounded-t last:rounded-b last:border-b">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2">
+      <div className="group-hover:bg-muted/40 flex items-center gap-2 px-3 py-2 transition-colors">
         <span className="text-muted-foreground w-5 text-right font-mono text-[10px] tabular-nums">
           {String(index + 1).padStart(2, "0")}
         </span>
@@ -303,6 +324,11 @@ function StepCard({
         <span className="font-mono text-xs font-medium tracking-wider uppercase">
           {palette.label}
         </span>
+        {action.type === "dispense" && action.reagent && (
+          <span className="text-muted-foreground font-mono text-[11px]">
+            {reagentLabels[action.reagent].formula}
+          </span>
+        )}
 
         <div className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
           <Button

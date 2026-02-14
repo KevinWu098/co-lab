@@ -13,7 +13,7 @@ export type Reagent = (typeof reagents)[number];
 export const reagentLabels: Record<Reagent, { formula: string; name: string }> = {
   A: { formula: "H₂O₂", name: "Hydrogen Peroxide" },
   B: { formula: "Foaming Agent", name: "Dish Soap" },
-  C: { formula: "Yeast", name: "Catalyst" },
+  C: { formula: "Catalyst (Yeast)", name: "Catalyst" },
 };
 
 export const reagentPositions: Record<Reagent, number> = {
@@ -144,3 +144,91 @@ export const procedureSchema = z.object({
 });
 
 export type Procedure = z.infer<typeof procedureSchema>;
+
+// ── Agent structured output ────────────────────────────────────────────────
+// Flat action schema avoids discriminatedUnion / oneOf which some providers
+// (OpenAI) do not support in structured-output JSON schemas.
+
+export const agentActionSchema = z.object({
+  type: z
+    .enum(["dispense", "stir", "cleanup"])
+    .describe("The type of lab action."),
+  reagent: z
+    .enum(reagents)
+    .nullable()
+    .describe("Reagent position. Required for dispense, null otherwise."),
+  amount: z
+    .number()
+    .nullable()
+    .describe("Amount to dispense. Required for dispense, null otherwise."),
+  unit: z
+    .string()
+    .nullable()
+    .describe(
+      "Unit string. For dispense: mL | tsp | tbsp. For stir: s | ms. Null for cleanup.",
+    ),
+  duration: z
+    .number()
+    .nullable()
+    .describe("Duration in the given unit. Required for stir, null otherwise."),
+});
+
+export type AgentAction = z.infer<typeof agentActionSchema>;
+
+export const agentProcedureResultSchema = z.object({
+  reasoning: z
+    .string()
+    .describe(
+      "Step-by-step reasoning about how the source document maps to lab actions. " +
+        "Explain what the procedure is trying to achieve and why each action was chosen.",
+    ),
+  goals: z
+    .array(z.string())
+    .describe(
+      "A list of high-level goals the procedure is trying to accomplish, " +
+        "in the order they should be achieved. These help the agent maintain coherence.",
+    ),
+  steps: z
+    .array(agentActionSchema)
+    .describe("The ordered list of lab actions derived from the source document."),
+});
+
+/** Convert flat agent actions to typed Action objects. */
+export function toActions(flat: AgentAction[]): Action[] {
+  return flat.flatMap((a): Action[] => {
+    switch (a.type) {
+      case "dispense": {
+        const reagent = a.reagent as Reagent | null;
+        if (!reagent || a.amount == null) return [];
+        return [
+          {
+            type: "dispense",
+            reagent,
+            amount: a.amount,
+            unit: (a.unit as "mL" | "tsp" | "tbsp") ?? "mL",
+          },
+        ];
+      }
+      case "stir": {
+        if (a.duration == null) return [];
+        return [
+          {
+            type: "stir",
+            duration: a.duration,
+            unit: (a.unit as "s" | "ms") ?? "s",
+          },
+        ];
+      }
+      case "cleanup":
+        return [{ type: "cleanup" }];
+      default:
+        return [];
+    }
+  });
+}
+
+export type AgentProcedureResult = {
+  reasoning: string;
+  goals: string[];
+  steps: Action[];
+};

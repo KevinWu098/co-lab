@@ -33,7 +33,7 @@ export function Chat({ expanded = false, onToggleExpand }: ChatProps) {
 
   return (
     <div
-      className={`bg-background relative flex h-full flex-col border ${expanded ? "flex-1" : "w-xs"}`}
+      className={`bg-background relative flex h-full flex-col border ${expanded ? "w-full flex-1" : "w-xs"}`}
     >
       {expanded && onToggleExpand && (
         <button
