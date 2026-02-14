@@ -16,24 +16,38 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
+import { Pulse } from "@/components/co-lab/pulse";
 
 export function Chat() {
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, stop } = useChat();
 
+  const pulseVariant =
+    status === "streaming" ? "running" : status === "submitted" ? "waiting" : "idle";
+
   return (
-    <div className="flex h-full w-xs flex-col">
-      <div className="border-b px-4 py-3">
-        <h2 className="font-sans text-sm font-medium">Lab Assistant</h2>
+    <div className="bg-background flex h-full w-xs flex-col border">
+      <div className="flex items-center gap-2 border-b px-4 py-3">
+        <BeakerIcon className="text-muted-foreground size-3.5" />
+        <span className="text-muted-foreground font-mono text-[0.65rem] font-medium tracking-widest uppercase">
+          Lab Assistant
+        </span>
+        <Pulse className="ml-auto" variant={pulseVariant} />
       </div>
 
       <Conversation className="flex-1">
         {messages.length === 0 ? (
-          <ConversationEmptyState
-            description="Ask about your experiment data, lab conditions, or analysis."
-            icon={<BeakerIcon className="size-6" />}
-            title="Co:Lab Assistant"
-          />
+          <ConversationEmptyState className="gap-4 px-6">
+            <div className="text-muted-foreground flex size-10 items-center justify-center border border-dashed">
+              <BeakerIcon className="size-5" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="font-mono text-sm font-medium">Co:Lab Assistant</h3>
+              <p className="text-muted-foreground max-w-[22ch] text-xs leading-relaxed">
+                Ask about your experiment data, lab conditions, or analysis.
+              </p>
+            </div>
+          </ConversationEmptyState>
         ) : (
           <ConversationContent className="gap-4 p-3">
             {messages.map((message) => (
@@ -68,6 +82,7 @@ export function Chat() {
           }}
         >
           <PromptInputTextarea
+            className="min-h-10 text-xs"
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your experiment..."
             value={input}

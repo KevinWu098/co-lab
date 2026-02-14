@@ -5,12 +5,13 @@ import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 interface IterationItemProps {
   experimentId: string;
   iteration: Iteration;
+  isActive?: boolean;
 }
 
-export function IterationItem({ experimentId, iteration }: IterationItemProps) {
+export function IterationItem({ experimentId, iteration, isActive }: IterationItemProps) {
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild className="h-fit pl-8">
+      <SidebarMenuButton asChild className="h-fit pl-8" isActive={isActive}>
         <Link
           className="items-start gap-2"
           href={`/dashboard/${experimentId}/${iteration.id}`}

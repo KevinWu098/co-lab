@@ -40,15 +40,10 @@ export function ExperimentItem({
           onClick={handleClick}
         >
           <div className="flex items-start gap-0">
-            <Pulse
-              className="mt-0.5 shrink-0"
-              variant={active ? experiment.status : "inactive"}
-            />
+            <Pulse className="shrink-0" variant={active ? experiment.status : "inactive"} />
             <div className="flex min-w-0 flex-col">
-              <span className="truncate font-medium text-sm">
-                {experiment.title}
-              </span>
-              <span className="font-mono text-[0.65rem] text-muted-foreground">
+              <span className="truncate text-sm font-medium">{experiment.title}</span>
+              <span className="text-muted-foreground font-mono text-[0.65rem]">
                 {statusLabel[experiment.status]} · {experiment.updatedAt}
               </span>
             </div>
@@ -56,10 +51,7 @@ export function ExperimentItem({
         </SidebarMenuButton>
       </SidebarMenuItem>
       {isSelected && (
-        <IterationList
-          experimentId={experiment.id}
-          iterations={experiment.iterations}
-        />
+        <IterationList experimentId={experiment.id} iterations={experiment.iterations} />
       )}
     </>
   );

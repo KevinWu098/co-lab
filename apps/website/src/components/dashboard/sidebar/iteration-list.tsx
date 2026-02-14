@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { SidebarMenuItem } from "@/components/ui/sidebar";
 import { IterationItem } from "./iteration-item";
@@ -18,10 +19,16 @@ export function IterationList({
   iterations,
 }: IterationListProps) {
   const [expanded, setExpanded] = useState(false);
+  const pathname = usePathname();
 
   if (iterations.length === 0) {
     return null;
   }
+
+  const isOnSpecificIteration = iterations.some(
+    (it) => pathname === `/dashboard/${experimentId}/${it.id}`,
+  );
+  const latestId = iterations[0].id;
 
   const visible = expanded ? iterations : iterations.slice(0, ABOVE_FOLD);
   const hasMore = iterations.length > ABOVE_FOLD;
@@ -29,7 +36,15 @@ export function IterationList({
   return (
     <>
       {visible.map((it) => (
-        <IterationItem experimentId={experimentId} iteration={it} key={it.id} />
+        <IterationItem
+          key={it.id}
+          experimentId={experimentId}
+          iteration={it}
+          isActive={isOnSpecificIteration
+            ? pathname === `/dashboard/${experimentId}/${it.id}`
+            : it.id === latestId
+          }
+        />
       ))}
       {hasMore && !expanded && (
         <SidebarMenuItem>

@@ -54,7 +54,7 @@ function AccordionContent({
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
   return (
     <AccordionPrimitive.Content
-      className="flex min-h-0 flex-1 flex-col overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden text-sm data-[state=closed]:hidden"
       data-slot="accordion-content"
       {...props}
     >

@@ -27,8 +27,7 @@ export function Background() {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
   useEffect(() => {
-    const update = () =>
-      setSize({ w: window.innerWidth, h: window.innerHeight });
+    const update = () => setSize({ w: window.innerWidth, h: window.innerHeight });
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
