@@ -51,13 +51,13 @@ export function ContentPanels() {
       </AccordionItem>
 
       <AccordionItem
-        value="graph"
+        value="graphs"
         className="bg-background flex flex-col rounded-b-md border data-[state=open]:flex-1"
       >
         <AccordionTrigger className="px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
           <span className="flex items-center gap-2">
             <ChartLineIcon className="text-muted-foreground size-4" />
-            Graph
+            Graphs
           </span>
         </AccordionTrigger>
         <AccordionContent className="flex min-h-0 flex-1 flex-col p-0">
