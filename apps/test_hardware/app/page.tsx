@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { MessageLogPanel } from "./dashboard/components/MessageLogPanel";
 import { StatusHeader } from "./dashboard/components/StatusHeader";
+import { TelemetryPanel } from "./dashboard/components/TelemetryPanel";
 import { ThermalPanel } from "./dashboard/components/ThermalPanel";
 import { WebcamPanel } from "./dashboard/components/WebcamPanel";
 import {
@@ -21,7 +22,7 @@ import {
   DEFAULT_XARM_SERVO_IDS,
   SEND_DEBOUNCE_MS,
 } from "./dashboard/constants";
-import type { LogEntry, XArmServoState } from "./dashboard/types";
+import type { LogEntry, TelemetryPoint, XArmServoState } from "./dashboard/types";
 import {
   buildLogEntry,
   clamp,
@@ -34,6 +35,7 @@ import {
 } from "./dashboard/utils";
 
 export default function Page() {
+  const MAX_TELEMETRY_POINTS = 120;
   const [wsUrl, setWsUrl] = useState(DEFAULT_WS_URL);
   const [connected, setConnected] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -83,6 +85,12 @@ export default function Page() {
   const [webcamStreamUrl, setWebcamStreamUrl] = useState(deriveWebcamStreamUrl(DEFAULT_WS_URL));
   const [webcamStreamNonce, setWebcamStreamNonce] = useState(0);
   const [webcamStreamError, setWebcamStreamError] = useState<string | undefined>(undefined);
+  const [volumeMl, setVolumeMl] = useState<number | undefined>(undefined);
+  const [volumeError, setVolumeError] = useState<string | undefined>(undefined);
+  const [volumeUpdatedAtMs, setVolumeUpdatedAtMs] = useState<number | undefined>(undefined);
+  const [thermalMaxPoints, setThermalMaxPoints] = useState<TelemetryPoint[]>([]);
+  const [thermalMinPoints, setThermalMinPoints] = useState<TelemetryPoint[]>([]);
+  const [volumePoints, setVolumePoints] = useState<TelemetryPoint[]>([]);
 
   const wsRef = useRef<WebSocket | null>(null);
   const debounceTimersRef = useRef<Partial<Record<number, ReturnType<typeof setTimeout>>>>({});
@@ -123,9 +131,25 @@ export default function Page() {
     const separator = webcamStreamUrl.includes("?") ? "&" : "?";
     return `${webcamStreamUrl}${separator}v=${webcamStreamNonce}`;
   }, [webcamStreamUrl, webcamStreamNonce]);
+  const volumeLabel = useMemo(() => {
+    if (volumeError) {
+      return `Error: ${volumeError}`;
+    }
+    if (volumeMl === undefined) {
+      return "No estimate";
+    }
+    return `${volumeMl.toFixed(1)} mL`;
+  }, [volumeError, volumeMl]);
 
   const pushLog = (entry: LogEntry) => {
     setLogs((prev) => [entry, ...prev].slice(0, 200));
+  };
+
+  const pushTelemetryPoint = (
+    setter: React.Dispatch<React.SetStateAction<TelemetryPoint[]>>,
+    point: TelemetryPoint,
+  ) => {
+    setter((prev) => [...prev, point].slice(-MAX_TELEMETRY_POINTS));
   };
 
   const syncThermalFromPayload = (payload: unknown) => {
@@ -139,9 +163,15 @@ export default function Page() {
 
     if (typeof payload.maxTempC === "number") {
       setThermalMaxTempC(payload.maxTempC);
+      const timestamp =
+        typeof payload.updatedAtMs === "number" ? Math.round(payload.updatedAtMs) : Date.now();
+      pushTelemetryPoint(setThermalMaxPoints, { t: timestamp, value: payload.maxTempC });
     }
     if (typeof payload.minTempC === "number") {
       setThermalMinTempC(payload.minTempC);
+      const timestamp =
+        typeof payload.updatedAtMs === "number" ? Math.round(payload.updatedAtMs) : Date.now();
+      pushTelemetryPoint(setThermalMinPoints, { t: timestamp, value: payload.minTempC });
     }
     if (typeof payload.fps === "number") {
       setThermalFps(payload.fps);
@@ -168,6 +198,26 @@ export default function Page() {
     }
   };
 
+  const syncVolumeFromPayload = (payload: unknown) => {
+    if (!isRecord(payload)) {
+      return;
+    }
+    const error = typeof payload.error === "string" ? payload.error : undefined;
+    setVolumeError(error);
+
+    if (typeof payload.updatedAtMs === "number") {
+      setVolumeUpdatedAtMs(Math.round(payload.updatedAtMs));
+    }
+
+    if (typeof payload.volumeMl === "number") {
+      const value = Number(payload.volumeMl);
+      setVolumeMl(value);
+      const timestamp =
+        typeof payload.updatedAtMs === "number" ? Math.round(payload.updatedAtMs) : Date.now();
+      pushTelemetryPoint(setVolumePoints, { t: timestamp, value });
+    }
+  };
+
   const sendMessage = (payload: object) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       pushLog(buildLogEntry("info", "WebSocket not connected"));
@@ -191,6 +241,10 @@ export default function Page() {
     const webcamSource = isRecord(payload.webcam) ? payload.webcam : undefined;
     if (webcamSource) {
       syncWebcamFromPayload(webcamSource);
+    }
+    const volumeSource = isRecord(payload.volume) ? payload.volume : undefined;
+    if (volumeSource) {
+      syncVolumeFromPayload(volumeSource);
     }
 
     const xarmSource = isRecord(payload.xarm) ? payload.xarm : payload;
@@ -410,6 +464,10 @@ export default function Page() {
           syncWebcamFromPayload(payload);
           return;
         }
+        if (payload.type === "volume") {
+          syncVolumeFromPayload(payload);
+          return;
+        }
 
         if (payload.type === "state") {
           syncFromState(payload);
@@ -501,6 +559,7 @@ export default function Page() {
       setAutomationStirRunning(false);
       setThermalStreamError(undefined);
       setWebcamStreamError(undefined);
+      setVolumeError(undefined);
       pushLog(buildLogEntry("info", "WebSocket disconnected"));
     };
 
@@ -753,6 +812,25 @@ export default function Page() {
               </button>
             </div>
           </div>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+          <TelemetryPanel
+            thermalMaxPoints={thermalMaxPoints}
+            thermalMinPoints={thermalMinPoints}
+            volumePoints={volumePoints}
+            thermalMaxLabel={
+              thermalMaxTempC !== undefined ? `${thermalMaxTempC.toFixed(1)} C` : "No data"
+            }
+            thermalMinLabel={
+              thermalMinTempC !== undefined ? `${thermalMinTempC.toFixed(1)} C` : "No data"
+            }
+            volumeLabel={
+              volumeUpdatedAtMs
+                ? `${volumeLabel} @ ${new Date(volumeUpdatedAtMs).toLocaleTimeString()}`
+                : volumeLabel
+            }
+          />
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">

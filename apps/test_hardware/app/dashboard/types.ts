@@ -11,3 +11,8 @@ export type XArmServoState = {
   centerDeg: number;
   online: boolean;
 };
+
+export type TelemetryPoint = {
+  t: number;
+  value: number;
+};

@@ -1,8 +1,12 @@
 import asyncio
+import base64
 import importlib
 import json
 import logging
 import math
+import os
+import re
+import time
 from typing import Any
 
 import websockets
@@ -57,7 +61,16 @@ client_send_locks: dict[Any, asyncio.Lock] = {}
 rig_base_servo_task: asyncio.Task | None = None
 rig_stirrer_task: asyncio.Task | None = None
 rig_diagnostic_task: asyncio.Task | None = None
+volume_estimation_task: asyncio.Task | None = None
 automation_lock = asyncio.Lock()
+
+anthropic_client: Any | None = None
+anthropic_model = "claude-haiku-4-5"
+latest_volume_ml: float | None = None
+latest_volume_raw: str | None = None
+latest_volume_error: str | None = None
+latest_volume_updated_ms: int | None = None
+volume_query_enabled_until_monotonic = 0.0
 
 
 def parse_xarm_move_ms(raw: Any) -> int:
@@ -168,6 +181,31 @@ def parse_automation_stir_duration_s(raw: Any) -> float:
     return duration_s
 
 
+def parse_volume_from_text(raw_text: str) -> float | None:
+    match = re.search(r"-?\d+(?:\.\d+)?", raw_text)
+    if not match:
+        return None
+    try:
+        volume_ml = float(match.group(0))
+    except ValueError:
+        return None
+    if not math.isfinite(volume_ml) or volume_ml < 0:
+        return None
+    return volume_ml
+
+
+def volume_payload() -> dict[str, Any]:
+    return {
+        "type": "volume",
+        "subsystem": "volume",
+        "model": anthropic_model,
+        "volumeMl": latest_volume_ml,
+        "raw": latest_volume_raw,
+        "error": latest_volume_error,
+        "updatedAtMs": latest_volume_updated_ms,
+    }
+
+
 def state_payload() -> dict[str, Any]:
     xarm_state = xarm_controller.state_payload()
     rig_state = rig_controller.state_payload()
@@ -179,6 +217,13 @@ def state_payload() -> dict[str, Any]:
         "rig": rig_state,
         "thermal": thermal_state,
         "webcam": webcam_state,
+        "volume": {
+            "model": anthropic_model,
+            "volumeMl": latest_volume_ml,
+            "raw": latest_volume_raw,
+            "error": latest_volume_error,
+            "updatedAtMs": latest_volume_updated_ms,
+        },
         "servos": xarm_state["servos"],
         "limits": xarm_state["limits"],
         "defaults": xarm_state["defaults"],
@@ -207,47 +252,157 @@ async def send_error(websocket: Any, reason: str) -> None:
     await send_json(websocket, {"type": "error", "error": reason})
 
 
-async def broadcast_state() -> None:
+async def broadcast_payload(payload: dict[str, Any]) -> None:
     if not clients:
         return
 
-    payload = json.dumps(state_payload())
+    serialized_payload = json.dumps(payload)
     stale_clients: list[Any] = []
     for websocket in tuple(clients):
-        if not await send_text(websocket, payload):
+        if not await send_text(websocket, serialized_payload):
             stale_clients.append(websocket)
 
     for websocket in stale_clients:
         clients.discard(websocket)
         client_send_locks.pop(websocket, None)
+
+
+async def broadcast_state() -> None:
+    await broadcast_payload(state_payload())
 
 
 async def broadcast_thermal() -> None:
-    if not clients:
-        return
-    payload = json.dumps(thermal_controller.thermal_payload())
-    stale_clients: list[Any] = []
-    for websocket in tuple(clients):
-        if not await send_text(websocket, payload):
-            stale_clients.append(websocket)
-
-    for websocket in stale_clients:
-        clients.discard(websocket)
-        client_send_locks.pop(websocket, None)
+    await broadcast_payload(thermal_controller.thermal_payload())
 
 
 async def broadcast_webcam() -> None:
-    if not clients:
-        return
-    payload = json.dumps(webcam_controller.webcam_payload())
-    stale_clients: list[Any] = []
-    for websocket in tuple(clients):
-        if not await send_text(websocket, payload):
-            stale_clients.append(websocket)
+    await broadcast_payload(webcam_controller.webcam_payload())
 
-    for websocket in stale_clients:
-        clients.discard(websocket)
-        client_send_locks.pop(websocket, None)
+
+async def broadcast_volume() -> None:
+    await broadcast_payload(volume_payload())
+
+
+def enable_volume_queries_for_seconds(duration_s: float) -> None:
+    global volume_query_enabled_until_monotonic
+    volume_query_enabled_until_monotonic = max(
+        volume_query_enabled_until_monotonic,
+        time.monotonic() + max(0.0, duration_s),
+    )
+
+
+def initialize_anthropic_client() -> None:
+    global anthropic_client
+    global latest_volume_error
+
+    try:
+        dotenv_module = importlib.import_module("dotenv")
+        load_dotenv = getattr(dotenv_module, "load_dotenv", None)
+        if callable(load_dotenv):
+            load_dotenv()
+    except Exception:
+        pass
+
+    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    if not api_key:
+        latest_volume_error = "anthropic_api_key_missing"
+        logging.warning("volume estimation disabled: ANTHROPIC_API_KEY missing")
+        return
+
+    try:
+        anthropic_module = importlib.import_module("anthropic")
+        anthropic_client = anthropic_module.Anthropic(api_key=api_key)
+        latest_volume_error = None
+    except Exception as exc:
+        latest_volume_error = f"anthropic_init_failed:{exc}"
+        logging.exception("failed to initialize anthropic client")
+
+
+def request_volume_estimate_sync(jpeg: bytes) -> tuple[float | None, str | None]:
+    if anthropic_client is None:
+        return None, "anthropic_unavailable"
+
+    image_base64 = base64.b64encode(jpeg).decode("ascii")
+    response = anthropic_client.messages.create(
+        model=anthropic_model,
+        max_tokens=10,
+        temperature=0,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Give me the volume of liquid and/or foam in the flask in "
+                            "milliliters as just the number. Use the graduation lines for "
+                            "reference. The height of substance may be higher than the highest "
+                            "marking. Infer the volume if between markings. The angle of the "
+                            "image may be skewed."
+                        ),
+                    },
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": image_base64,
+                        },
+                    },
+                ],
+            }
+        ],
+    )
+
+    raw_text = ""
+    content = getattr(response, "content", None)
+    if isinstance(content, list) and content:
+        first_entry = content[0]
+        raw_text = str(getattr(first_entry, "text", "")).strip()
+    volume_ml = parse_volume_from_text(raw_text)
+    return volume_ml, raw_text
+
+
+async def run_volume_estimation_loop() -> None:
+    global latest_volume_ml
+    global latest_volume_raw
+    global latest_volume_error
+    global latest_volume_updated_ms
+
+    while True:
+        try:
+            await asyncio.sleep(2.0)
+
+            if anthropic_client is None:
+                continue
+
+            if time.monotonic() > volume_query_enabled_until_monotonic:
+                continue
+
+            frame = webcam_controller.latest_jpeg
+            if frame is None:
+                continue
+
+            volume_ml, raw_text = await asyncio.to_thread(request_volume_estimate_sync, frame)
+            latest_volume_updated_ms = int(time.time() * 1000)
+            latest_volume_raw = raw_text
+
+            if volume_ml is None:
+                latest_volume_ml = None
+                latest_volume_error = "volume_parse_failed"
+            else:
+                latest_volume_ml = round(volume_ml, 2)
+                latest_volume_error = None
+
+            await broadcast_volume()
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            latest_volume_ml = None
+            latest_volume_updated_ms = int(time.time() * 1000)
+            latest_volume_error = f"volume_estimation_failed:{exc}"
+            logging.exception("volume estimation loop failed")
+            await broadcast_volume()
 
 
 async def run_rig_base_move(target: float) -> None:
@@ -360,6 +515,8 @@ async def run_dispense(dropper: int, amount_ml: float) -> dict[str, Any]:
         await sleep_non_negative(AUTOMATION_DISPENSE_VALVE_OPEN_S)
 
         rig_controller.set_channel_immediate(valve_channel, RIG_CLOSED_ANGLE)
+        if dropper == 3:
+            enable_volume_queries_for_seconds(10.0)
         await broadcast_state()
 
         if send_index < sends - 1:
@@ -975,13 +1132,18 @@ async def handler(websocket: Any) -> None:
 
 
 async def main() -> None:
+    global volume_estimation_task
+
     logging.info("initializing controllers...")
+    initialize_anthropic_client()
 
     thermal_controller.on_thermal_update = broadcast_thermal
     webcam_controller.on_webcam_update = broadcast_webcam
     await xarm_controller.capture_startup_centers()
     await thermal_controller.start()
     await webcam_controller.start()
+    if anthropic_client is not None:
+        volume_estimation_task = asyncio.create_task(run_volume_estimation_loop())
     thermal_http_runner = await start_thermal_http_server()
     logging.info(
         "xarm available=%s online_ids=%s error=%s",
@@ -1016,6 +1178,13 @@ async def main() -> None:
             logging.info("websocket server listening on %s:%s", HOST, PORT)
             await asyncio.Future()
     finally:
+        if volume_estimation_task is not None and not volume_estimation_task.done():
+            volume_estimation_task.cancel()
+            try:
+                await volume_estimation_task
+            except asyncio.CancelledError:
+                pass
+            volume_estimation_task = None
         await thermal_controller.stop()
         await webcam_controller.stop()
         if thermal_http_runner is not None:

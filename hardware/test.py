@@ -28,7 +28,8 @@ response = client.messages.create(
                     "type": "text",
                     "text": "Give me the volume of liquid and/or foam in the flask in milliliters as just the number. "
                             "Use the graduation lines for reference. The height of substance may be higher than the highest marking. "
-                            "Infer the volume if between markings. The angle of the image may be skewed. THe "
+                            "Infer the volume if between markings. The angle of the image may be skewed. "
+                            "If there is no flask respond with 0. If the flask overflows respond with 750"
                 },
                 {
                     "type": "image",
