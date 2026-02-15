@@ -1,0 +1,11 @@
+websockets
+xarm
+hidapi
+adafruit-blinka
+adafruit-circuitpython-motor
+adafruit-circuitpython-pca9685
+adafruit-circuitpython-mlx90640
+lgpio
+aiohttp
+pillow
+opencv-python-headless
