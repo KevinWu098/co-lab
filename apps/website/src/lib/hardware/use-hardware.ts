@@ -38,6 +38,11 @@ const INITIAL_HARDWARE_STATE: HardwareState = {
     streamPath: "/webcam.mjpeg",
     httpPort: 8081,
   },
+  volume: {
+    volumeMl: null,
+    error: null,
+    updatedAtMs: null,
+  },
 };
 
 const INITIAL_EXECUTION_STATE: ExecutionState = {
@@ -164,6 +169,17 @@ export function useHardware(): UseHardwareReturn {
         };
       }
 
+      // Volume
+      const volume = payload.volume as Record<string, unknown> | undefined;
+      if (volume) {
+        next.volume = {
+          volumeMl: typeof volume.volumeMl === "number" ? volume.volumeMl : prev.volume.volumeMl,
+          error: volume.error !== undefined ? ((volume.error as string) ?? null) : prev.volume.error,
+          updatedAtMs:
+            typeof volume.updatedAtMs === "number" ? volume.updatedAtMs : prev.volume.updatedAtMs,
+        };
+      }
+
       return next;
     });
   }, []);
@@ -259,6 +275,19 @@ export function useHardware(): UseHardwareReturn {
             },
           }));
           break;
+
+        case "volume":
+          setState((prev) => ({
+            ...prev,
+            volume: {
+              volumeMl:
+                typeof msg.volumeMl === "number" ? msg.volumeMl : prev.volume.volumeMl,
+              error: msg.error !== undefined ? (msg.error ?? null) : prev.volume.error,
+              updatedAtMs:
+                typeof msg.updatedAtMs === "number" ? msg.updatedAtMs : prev.volume.updatedAtMs,
+            },
+          }));
+          break;
       }
     },
     [syncFromState],
@@ -336,6 +365,7 @@ export function useHardware(): UseHardwareReturn {
           tempC: s.thermal.maxTempC,
           dispensed: { h2o2: d.h2o2, soap: d.soap, catalyst: d.catalyst },
           totalVolumeMl: d.total,
+          volumeMl: s.volume.volumeMl,
         },
       ]);
     }, TELEMETRY_SAMPLE_INTERVAL_MS);

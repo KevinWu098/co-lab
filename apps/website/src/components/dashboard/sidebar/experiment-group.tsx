@@ -19,7 +19,7 @@ export function ExperimentGroup({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="font-mono text-[0.65rem] tracking-widest uppercase">
+      <SidebarGroupLabel className="font-mono text-[0.65rem] tracking-widest uppercase group-data-[collapsible=icon]:hidden">
         {label}
       </SidebarGroupLabel>
       <SidebarMenu>

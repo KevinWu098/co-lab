@@ -7,8 +7,6 @@ import {
 } from "lucide-react";
 import { useMemo, useRef, useEffect, useState } from "react";
 import {
-  Area,
-  AreaChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -29,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 // ── Graph definitions ───────────────────────────────────────────────────────
 
-type GraphId = "temperature" | "volume" | "reactants";
+type GraphId = "temperature" | "visionVolume" | "reactants";
 
 interface GraphSource {
   id: GraphId;
@@ -40,7 +38,7 @@ interface GraphSource {
 
 const GRAPHS: GraphSource[] = [
   { id: "temperature", label: "Temperature", icon: ThermometerIcon },
-  { id: "volume", label: "Volume", icon: BeakerIcon },
+  { id: "visionVolume", label: "Volume", subtitle: "AI-estimated flask volume", icon: BeakerIcon },
   {
     id: "reactants",
     label: "Reactants",
@@ -55,8 +53,8 @@ const temperatureConfig = {
   value: { label: "Temperature (°C)", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
-const volumeConfig = {
-  value: { label: "Volume (mL)", color: "var(--chart-4)" },
+const visionVolumeConfig = {
+  value: { label: "Volume (mL)", color: "var(--chart-2)" },
 } satisfies ChartConfig;
 
 const reactantsConfig = {
@@ -82,7 +80,7 @@ function toChartData(telemetry: TelemetryPoint[]) {
   return telemetry.map((p) => ({
     time: formatTime(p.elapsed),
     tempC: round1(p.tempC),
-    totalVolumeMl: Math.round(p.totalVolumeMl * 10) / 10,
+    volumeMl: round1(p.volumeMl),
     h2o2: Math.round(p.dispensed.h2o2 * 10) / 10,
     catalyst: Math.round(p.dispensed.catalyst * 10) / 10,
     soap: Math.round(p.dispensed.soap * 10) / 10,
@@ -140,57 +138,6 @@ function TemperatureChart({ compact, animate = true, data }: ChartProps) {
   );
 }
 
-function VolumeChart({ compact, animate = true, data }: ChartProps) {
-  return (
-    <ChartContainer
-      config={volumeConfig}
-      className="aspect-auto! h-full w-full"
-    >
-      <AreaChart
-        data={data}
-        margin={{ top: 12, right: 12, bottom: 0, left: compact ? -20 : 0 }}
-      >
-        <defs>
-          <linearGradient id="volumeFill" x1="0" y1="0" x2="0" y2="1">
-            <stop
-              offset="5%"
-              stopColor="var(--color-value)"
-              stopOpacity={0.3}
-            />
-            <stop
-              offset="95%"
-              stopColor="var(--color-value)"
-              stopOpacity={0.05}
-            />
-          </linearGradient>
-        </defs>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="time"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          fontSize={compact ? 10 : 12}
-        />
-        {!compact && (
-          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-        )}
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Area
-          type="stepAfter"
-          dataKey="totalVolumeMl"
-          name="Volume (mL)"
-          stroke="var(--color-value)"
-          strokeWidth={2}
-          fill="url(#volumeFill)"
-          dot={false}
-          isAnimationActive={animate}
-        />
-      </AreaChart>
-    </ChartContainer>
-  );
-}
-
 function ReactantsChart({ compact, animate = true, data }: ChartProps) {
   return (
     <ChartContainer
@@ -243,11 +190,53 @@ function ReactantsChart({ compact, animate = true, data }: ChartProps) {
   );
 }
 
+function VisionVolumeChart({ compact, animate = true, data }: ChartProps) {
+  return (
+    <ChartContainer
+      config={visionVolumeConfig}
+      className="aspect-auto! h-full w-full"
+    >
+      <LineChart
+        data={data}
+        margin={{ top: 12, right: 12, bottom: 0, left: compact ? -20 : 0 }}
+      >
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="time"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          fontSize={compact ? 10 : 12}
+        />
+        {!compact && (
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tickFormatter={(v: number) => `${v.toFixed(1)}`}
+          />
+        )}
+        <ChartTooltip content={<ChartTooltipContent />} />
+        <Line
+          type="monotone"
+          dataKey="volumeMl"
+          name="Volume (mL)"
+          stroke="var(--color-value)"
+          strokeWidth={2}
+          dot={!compact && data.length < 30}
+          isAnimationActive={animate}
+          connectNulls
+        />
+      </LineChart>
+    </ChartContainer>
+  );
+}
+
 // ── Chart lookup ────────────────────────────────────────────────────────────
 
 const CHART_COMPONENTS: Record<GraphId, React.ComponentType<ChartProps>> = {
   temperature: TemperatureChart,
-  volume: VolumeChart,
+  visionVolume: VisionVolumeChart,
   reactants: ReactantsChart,
 };
 

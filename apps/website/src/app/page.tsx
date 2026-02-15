@@ -12,89 +12,8 @@ export default function Home() {
       {/* Fold — fixed behind everything, revealed when content scrolls away */}
       <FoldReveal />
 
-      {/* Content — scrolls over the fold */}
-      <div className="relative z-10 bg-white">
-        {/* Hero — shader background (dark) */}
-        <section className="dark relative flex h-svh">
-          <Background />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent_25%,rgba(0,0,0,0.95))]" />
-          <div className="relative mt-auto mr-auto pb-10 pl-10 mix-blend-exclusion">
-            <h1 className="text-[14rem] leading-none font-bold tracking-tighter text-white">
-              Co:Lab
-            </h1>
-            <Link href="/dashboard" className="group ml-3 flex items-center gap-2">
-              <p className="group-hover:text-primary text-5xl leading-none font-semibold text-white transition-colors">
-                AI-Accelerated Scientific Discovery
-              </p>
-              <ArrowRight className="group-hover:text-primary h-10 w-10 text-white transition-colors" />
-            </Link>
-          </div>
-        </section>
-
-        {/* Problem Statement — light */}
-        <section className="bg-background relative px-10 py-16">
-          <p className="max-w-8xl text-foreground text-6xl leading-snug font-medium tracking-tight text-balance">
-            <span className="text-primary font-semibold text-balance">Co:Lab</span> is an integrated
-            agentic laboratory — unlocking the <span className="font-semibold">40%</span> of
-            researcher time spent on manual tasks and redirecting it toward discovery that moves
-            science forward.
-          </p>
-          <Separator className="mt-16 border-t-2" />
-        </section>
-
-        {/* Design, Execute, Iterate — light */}
-        <section className="bg-background relative flex flex-col gap-8 px-10 pb-20 tracking-tighter">
-          <div className="text-6xl font-semibold">
-            <span>Built end-to-end</span>
-          </div>
-
-          <div className="grid w-full grid-cols-3 gap-16">
-            <div className="border-border flex min-h-[400px] flex-col border p-8">
-              <div className="border-border mb-auto aspect-video w-full overflow-hidden border">
-                <ImageLightbox
-                  src="/design_two.png"
-                  alt="Design"
-                  className="h-full w-full object-cover object-left"
-                />
-              </div>
-              <h2 className="text-foreground mt-6 text-4xl font-bold tracking-tighter">Design</h2>
-              <p className="text-muted-foreground mt-1 text-lg leading-none">
-                Leverage agents to craft experimental protocols — from scratch or from existing
-                procedures.
-              </p>
-            </div>
-            <div className="border-border flex min-h-[400px] flex-col border p-8">
-              <div className="border-border mb-auto aspect-video w-full overflow-hidden border">
-                <ImageLightbox
-                  src="/execute.png"
-                  alt="Execute"
-                  className="h-full w-full object-cover object-left"
-                />
-              </div>
-              <h2 className="text-foreground mt-6 text-4xl font-bold tracking-tighter">Execute</h2>
-              <p className="text-muted-foreground mt-1 text-lg leading-none">
-                Run experiments with integrated hardware and observability across your lab.
-              </p>
-            </div>
-            <div className="border-border flex min-h-[400px] flex-col border p-8">
-              <div className="border-border mb-auto aspect-video w-full overflow-hidden border">
-                <ImageLightbox
-                  src="/iterate.png"
-                  alt="Iterate"
-                  className="h-full w-full object-cover object-left"
-                />
-              </div>
-              <h2 className="text-foreground mt-6 text-4xl font-bold tracking-tighter">Iterate</h2>
-              <p className="text-muted-foreground mt-1 text-lg leading-none">
-                Analyze results and design iterative experiments in real time, closing the loop.
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
-
       {/* Fold reveal — CTA */}
-      <div className="relative flex h-[600px] flex-col items-center justify-center gap-6">
+      {/* <div className="relative flex h-[600px] flex-col items-center justify-center gap-6">
         <h2 className="text-foreground/90 text-8xl font-bold tracking-tighter">
           What will you discover?
         </h2>
@@ -108,7 +27,7 @@ export default function Home() {
             </Link>
           </Button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

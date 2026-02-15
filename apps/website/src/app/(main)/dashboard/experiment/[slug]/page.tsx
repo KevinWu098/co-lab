@@ -40,8 +40,12 @@ export default function ExperimentPage() {
         .map((v) => Math.round(v * 10) / 10),
     [telemetry],
   );
-  const volumeValues = useMemo(
-    () => telemetry.map((p) => Math.round(p.totalVolumeMl * 10) / 10),
+  const visionVolumeValues = useMemo(
+    () =>
+      telemetry
+        .map((p) => p.volumeMl)
+        .filter((v): v is number => v != null)
+        .map((v) => Math.round(v * 10) / 10),
     [telemetry],
   );
 
@@ -104,18 +108,12 @@ export default function ExperimentPage() {
             <>
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-3"
+                className="grid grid-cols-2"
                 initial={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.35, delay: 0.05, ease }}
               >
                 <DataCard title="Temperature" unit="°C" values={tempValues} />
-                <DataCard title="Dispensed Volume" unit="mL" values={volumeValues} />
-                <DataCard
-                  last
-                  title="Thermal FPS"
-                  unit="fps"
-                  values={hwState.thermal.fps != null ? [Math.round(hwState.thermal.fps)] : []}
-                />
+                <DataCard last title="Volume" unit="mL" values={visionVolumeValues} />
               </motion.div>
 
               <motion.div
@@ -140,14 +138,23 @@ export default function ExperimentPage() {
               </motion.div>
             </>
           ) : (
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              className="flex min-h-0 flex-1"
-              initial={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.35, delay: 0.05, ease }}
-            >
-              <NewExperimentSetup onConfirm={handleConfirmSetup} />
-            </motion.div>
+            <>
+              <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                className="flex min-h-0 flex-1"
+                initial={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.35, delay: 0.05, ease }}
+              >
+                <NewExperimentSetup onConfirm={handleConfirmSetup} />
+              </motion.div>
+              <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.35, delay: 0.1, ease }}
+              >
+                <EquipmentStatus />
+              </motion.div>
+            </>
           )}
         </div>
       )}

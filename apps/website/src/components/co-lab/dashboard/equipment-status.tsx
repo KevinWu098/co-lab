@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BeakerIcon,
   CameraIcon,
   GrabIcon,
   type LucideIcon,
@@ -67,12 +68,23 @@ export function EquipmentStatus() {
         status: state.rig.available ? "online" : "offline",
         detail: state.rig.stirrerActive ? "Active" : undefined,
       },
+      {
+        id: "volume",
+        label: "Volume",
+        icon: BeakerIcon,
+        status: state.volume.volumeMl != null ? "online" : "offline",
+        detail: state.volume.error
+          ? state.volume.error
+          : state.volume.volumeMl != null
+            ? `${state.volume.volumeMl.toFixed(1)} mL`
+            : undefined,
+      },
     ],
     [state],
   );
 
   return (
-    <div className="grid grid-cols-5 gap-0">
+    <div className="grid grid-cols-6 gap-0">
       {equipment.map((eq, i) => {
         const Icon = eq.icon;
         const isOnline = eq.status === "online";

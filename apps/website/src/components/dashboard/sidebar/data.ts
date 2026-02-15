@@ -12,7 +12,41 @@ const proteinFoldingProcedure: ProcedureStep[] = [
   { id: "pf-08", action: { type: "cleanup" } },
 ];
 
+const baselineProcedure: ProcedureStep[] = [
+  { id: "et-01", action: { type: "dispense", reagent: "A", amount: 50, unit: "mL" } },
+  { id: "et-02", action: { type: "dispense", reagent: "B", amount: 36, unit: "mL" } },
+  { id: "et-03", action: { type: "stir", duration: 5, unit: "s" } },
+  { id: "et-04", action: { type: "dispense", reagent: "C", amount: 25, unit: "mL" } },
+  { id: "et-05", action: { type: "stir", duration: 5, unit: "s" } },
+  { id: "et-06", action: { type: "cleanup" } },
+];
+
 export const experiments: Experiment[] = [
+  {
+    id: "exp-000",
+    title: "Baseline",
+    status: "waiting",
+    updatedAt: "just now",
+    procedure: baselineProcedure,
+    reasoning:
+      "A standard baseline demonstration: 30 mL hydrogen peroxide is dispensed first as the " +
+      "oxygen source, followed by 30 mL foaming agent (dish soap) to trap the released oxygen into foam. " +
+      "A brief 3-second stir mixes them before adding 30 mL yeast catalyst to trigger rapid decomposition. " +
+      "A second 3-second stir ensures the catalyst is evenly distributed. Cleanup resets for the next run.",
+    goals: [
+      "Measure peak foam volume produced by equal-ratio reagents",
+      "Record temperature rise during catalytic decomposition",
+      "Establish a baseline reaction profile for future parameter sweeps",
+    ],
+    iterations: [
+      {
+        id: "exp-000-it-1",
+        number: 1,
+        summary: "Initial baseline run",
+        createdAt: "just now",
+      },
+    ],
+  },
   {
     id: "exp-001",
     title: "Protein folding sim #12",

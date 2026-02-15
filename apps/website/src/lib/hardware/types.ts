@@ -31,6 +31,15 @@ export interface WebcamState {
   httpPort: number;
 }
 
+export interface VolumeState {
+  /** Vision-estimated volume in mL, or null if no estimate yet. */
+  volumeMl: number | null;
+  /** Error string from the estimation, or null. */
+  error: string | null;
+  /** Timestamp (ms) of the last volume update. */
+  updatedAtMs: number | null;
+}
+
 // ── Aggregate hardware state ────────────────────────────────────────────────
 
 export interface HardwareState {
@@ -39,6 +48,7 @@ export interface HardwareState {
   rig: RigState;
   thermal: ThermalState;
   webcam: WebcamState;
+  volume: VolumeState;
 }
 
 // ── WebSocket messages (server → client) ────────────────────────────────────
@@ -49,6 +59,7 @@ export interface WsStateMessage {
   rig?: Record<string, unknown>;
   thermal?: Record<string, unknown>;
   webcam?: Record<string, unknown>;
+  volume?: Record<string, unknown>;
 }
 
 export interface WsAckMessage {
@@ -79,12 +90,21 @@ export interface WsWebcamMessage {
   fps?: number;
 }
 
+export interface WsVolumeMessage {
+  type: "volume";
+  volumeMl?: number;
+  raw?: string;
+  error?: string | null;
+  updatedAtMs?: number;
+}
+
 export type WsIncomingMessage =
   | WsStateMessage
   | WsAckMessage
   | WsErrorMessage
   | WsThermalMessage
-  | WsWebcamMessage;
+  | WsWebcamMessage
+  | WsVolumeMessage;
 
 // ── WebSocket commands (client → server) ─────────────────────────────────────
 
@@ -127,6 +147,8 @@ export interface TelemetryPoint {
   dispensed: { h2o2: number; soap: number; catalyst: number };
   /** Total cumulative volume dispensed (mL). */
   totalVolumeMl: number;
+  /** Vision-estimated volume in flask (mL), or null if unavailable. */
+  volumeMl: number | null;
 }
 
 // ── Experiment execution ─────────────────────────────────────────────────────
