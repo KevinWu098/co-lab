@@ -16,12 +16,12 @@ export function IterationItem({ experimentId, iteration, isActive }: IterationIt
           className="items-start gap-2"
           href={`/dashboard/experiment/${experimentId}`}
         >
-          <span className="mt-px shrink-0 font-mono text-[0.6rem] text-muted-foreground">
+          <span className="mt-px shrink-0 font-mono text-[0.7rem] text-muted-foreground">
             #{iteration.number}
           </span>
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-xs">{iteration.summary}</span>
-            <span className="font-mono text-[0.6rem] text-muted-foreground">
+            <span className="font-mono text-[0.7rem] text-muted-foreground">
               {iteration.createdAt}
             </span>
           </div>

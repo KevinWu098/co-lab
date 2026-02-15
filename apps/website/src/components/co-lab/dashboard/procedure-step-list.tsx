@@ -31,8 +31,8 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
             className="bg-background border-x border-t last:border-b"
             key={step.id}
           >
-            <div className="flex items-center gap-2 px-3 py-2">
-              <span className="text-muted-foreground w-5 text-left font-mono text-[10px] tabular-nums">
+            <div className="flex items-center gap-2 px-3.5 py-2.5">
+              <span className="text-muted-foreground w-5 text-left font-mono text-xs tabular-nums">
                 {String(index + 1).padStart(2, "0")}
               </span>
               <Icon className="text-muted-foreground size-3.5" />
@@ -40,21 +40,21 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
                 {meta.label}
               </span>
               {step.action.type === "dispense" && step.action.reagent && (
-                <span className="text-muted-foreground font-mono text-[11px]">
+                <span className="text-muted-foreground font-mono text-xs">
                   {reagentLabels[step.action.reagent].formula}
                 </span>
               )}
             </div>
 
             {spins && spins.length > 0 && (
-              <div className="border-t border-dashed px-3 py-1.5">
+              <div className="border-t border-dashed px-3.5 py-2">
                 {spins.map((spin, i) => (
                   <div
                     className="text-muted-foreground flex items-center gap-2 py-0.5"
                     key={`${spin.from}-${spin.to}-${i}`}
                   >
                     <RotateCcwIcon className="size-3 shrink-0" />
-                    <span className="font-mono text-[11px]">
+                    <span className="font-mono text-xs">
                       Spin {reagentLabels[spin.from].formula} &rarr;{" "}
                       {reagentLabels[spin.to].formula}
                       <span className="text-muted-foreground/50 ml-1">
@@ -67,9 +67,9 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
               </div>
             )}
 
-            <div className="border-t px-3 py-2">
+            <div className="border-t px-3.5 py-2.5">
               {step.action.type === "dispense" && (
-                <span className="text-muted-foreground font-mono text-[11px]">
+                <span className="text-muted-foreground font-mono text-xs">
                   {step.action.amount ?? "—"} {step.action.unit ?? "mL"}
                   {step.action.reagent
                     ? ` of ${reagentLabels[step.action.reagent].name}`
@@ -77,12 +77,12 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
                 </span>
               )}
               {step.action.type === "stir" && (
-                <span className="text-muted-foreground font-mono text-[11px]">
+                <span className="text-muted-foreground font-mono text-xs">
                   {step.action.duration ?? "—"} {step.action.unit ?? "s"}
                 </span>
               )}
               {step.action.type === "cleanup" && (
-                <span className="text-muted-foreground font-mono text-[11px]">
+                <span className="text-muted-foreground font-mono text-xs">
                   Remove current materials and replace with a fresh flask.
                 </span>
               )}

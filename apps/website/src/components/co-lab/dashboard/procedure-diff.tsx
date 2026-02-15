@@ -27,20 +27,20 @@ const DIFF_ACCENT: Record<
 > = {
   unchanged: { card: "", badge: "", badgeLabel: "", text: "" },
   added: {
-    card: "border-l-2 border-l-green-500! bg-green-500/5",
-    badge: "bg-green-500/15 text-green-700 dark:text-green-400",
+    card: "border-l-4 border-l-green-500! bg-green-500/10 dark:bg-green-500/15",
+    badge: "bg-green-500/20 text-green-700 dark:bg-green-500/25 dark:text-green-300",
     badgeLabel: "Added",
     text: "text-green-700 dark:text-green-400",
   },
   removed: {
-    card: "border-l-2 border-l-red-500! bg-red-500/5",
-    badge: "bg-red-500/15 text-red-700 dark:text-red-400",
+    card: "border-l-4 border-l-red-500! bg-red-500/10 dark:bg-red-500/15",
+    badge: "bg-red-500/20 text-red-700 dark:bg-red-500/25 dark:text-red-300",
     badgeLabel: "Removed",
     text: "line-through opacity-50",
   },
   modified: {
-    card: "border-l-2 border-l-amber-500! bg-amber-500/5",
-    badge: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    card: "border-l-4 border-l-amber-500! bg-amber-500/10 dark:bg-amber-500/15",
+    badge: "bg-amber-500/20 text-amber-700 dark:bg-amber-500/25 dark:text-amber-300",
     badgeLabel: "Modified",
     text: "",
   },
@@ -73,7 +73,7 @@ function FieldChangeInline({ fields }: { fields: FieldDiff[] }) {
   return (
     <span className="inline-flex flex-wrap gap-x-3 gap-y-0.5">
       {fields.map((f) => (
-        <span className="font-mono text-[11px]" key={f.field}>
+        <span className="font-mono text-xs" key={f.field}>
           <span className="text-muted-foreground/50">{fieldLabel(f.field)}: </span>
           <span className="text-red-600/70 line-through dark:text-red-400/70">
             {displayFieldValue(f.field, f.old ?? "")}
@@ -93,14 +93,14 @@ function FieldChangeInline({ fields }: { fields: FieldDiff[] }) {
 function SpinSection({ spins, muted }: { spins: SpinStep[]; muted?: boolean }) {
   if (spins.length === 0) return null;
   return (
-    <div className="border-t border-dashed px-3 py-1.5">
+    <div className="border-t border-dashed px-3.5 py-2">
       {spins.map((spin, i) => (
         <div
           className={`flex items-center gap-2 py-0.5 ${muted ? "opacity-50" : "text-muted-foreground"}`}
           key={`${spin.from}-${spin.to}-${i}`}
         >
           <RotateCcwIcon className="size-3 shrink-0" />
-          <span className="font-mono text-[11px]">
+          <span className="font-mono text-xs">
             Spin {reagentLabels[spin.from].formula} &rarr; {reagentLabels[spin.to].formula}
             <span className="text-muted-foreground/50 ml-1">
               ({spin.degrees > 0 ? "+" : ""}
@@ -129,27 +129,27 @@ function DetailSection({
   // For modified entries, show inline field changes instead of plain text
   if (status === "modified" && fields && fields.length > 0) {
     return (
-      <div className="border-t px-3 py-2">
+      <div className="border-t px-3.5 py-2.5">
         <FieldChangeInline fields={fields} />
       </div>
     );
   }
 
   return (
-    <div className="border-t px-3 py-2">
+    <div className="border-t px-3.5 py-2.5">
       {action.type === "dispense" && (
-        <span className={`font-mono text-[11px] ${accent.text || "text-muted-foreground"}`}>
+        <span className={`font-mono text-xs ${accent.text || "text-muted-foreground"}`}>
           {action.amount ?? "—"} {action.unit ?? "mL"}
           {action.reagent ? ` of ${reagentLabels[action.reagent].name}` : ""}
         </span>
       )}
       {action.type === "stir" && (
-        <span className={`font-mono text-[11px] ${accent.text || "text-muted-foreground"}`}>
+        <span className={`font-mono text-xs ${accent.text || "text-muted-foreground"}`}>
           {action.duration ?? "—"} {action.unit ?? "s"}
         </span>
       )}
       {action.type === "cleanup" && (
-        <span className={`font-mono text-[11px] ${accent.text || "text-muted-foreground"}`}>
+        <span className={`font-mono text-xs ${accent.text || "text-muted-foreground"}`}>
           Remove current materials and replace with a fresh flask.
         </span>
       )}
@@ -176,8 +176,8 @@ function DiffRow({
       className={`bg-background border-x border-t last:border-b ${accent.card}`}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2">
-        <span className="text-muted-foreground w-5 text-left font-mono text-[10px] tabular-nums">
+      <div className="flex items-center gap-2 px-3.5 py-2.5">
+        <span className="text-muted-foreground w-5 text-left font-mono text-xs tabular-nums">
           {String(entry.index + 1).padStart(2, "0")}
         </span>
         <Icon className="text-muted-foreground size-3.5" />
@@ -190,7 +190,7 @@ function DiffRow({
         </span>
         {action.type === "dispense" && action.reagent && (
           <span
-            className={`font-mono text-[11px] ${
+            className={`font-mono text-xs ${
               entry.status === "removed" ? "line-through opacity-50" : "text-muted-foreground"
             }`}
           >
@@ -201,7 +201,7 @@ function DiffRow({
         {/* Diff badge (far right) */}
         {accent.badgeLabel && (
           <span
-            className={`ml-auto rounded-none px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase ${accent.badge}`}
+            className={`ml-auto rounded-sm px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-wide ${accent.badge}`}
           >
             {accent.badgeLabel}
           </span>
@@ -262,8 +262,8 @@ export function ProcedureDiff({ previousSteps, newSteps }: ProcedureDiffProps) {
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Summary bar */}
       {hasChanges && (
-        <div className="border-b px-4 py-2">
-          <div className="flex items-center gap-3 font-mono text-[10px]">
+        <div className="border-b px-4 py-2.5">
+          <div className="flex items-center gap-4 font-mono text-xs font-semibold">
             {stats.added > 0 && (
               <span className="text-green-600 dark:text-green-400">+{stats.added} added</span>
             )}

@@ -235,7 +235,7 @@ export function ProcedureEditor({
                 <span className="flex-1 truncate text-left font-mono text-xs">
                   {sourceFile.name}
                 </span>
-                <span className="text-muted-foreground/60 text-[10px] tracking-wider uppercase">
+                <span className="text-muted-foreground/60 text-xs tracking-wider uppercase">
                   Source
                 </span>
               </button>
@@ -327,7 +327,7 @@ export function ProcedureEditor({
 
       {/* ── Action palette ── */}
       <div className="flex w-xs shrink-0 flex-col gap-2 overflow-y-auto border-l p-4">
-        <span className="text-muted-foreground px-1 font-mono text-[10px] tracking-widest uppercase">
+        <span className="text-muted-foreground px-1 font-mono text-xs tracking-widest uppercase">
           Actions
         </span>
         {ACTION_PALETTE.map((item) => (
@@ -341,7 +341,7 @@ export function ProcedureEditor({
             type="button"
           >
             <item.icon className="text-muted-foreground size-3.5" />
-            <span className="font-mono text-[11px] font-medium">{item.label}</span>
+            <span className="font-mono text-xs font-medium">{item.label}</span>
           </button>
         ))}
 
@@ -349,7 +349,7 @@ export function ProcedureEditor({
         {onAgentSubmit && (
           <>
             <div className="my-1 border-t" />
-            <span className="text-muted-foreground px-1 font-mono text-[10px] tracking-widest uppercase">
+            <span className="text-muted-foreground px-1 font-mono text-xs tracking-widest uppercase">
               Agent
             </span>
             <div className="flex flex-col gap-2">
@@ -380,12 +380,12 @@ export function ProcedureEditor({
                 {agentLoading ? (
                   <>
                     <LoaderIcon className="size-3 animate-spin" />
-                    <span className="font-mono text-[11px]">Processing</span>
+                    <span className="font-mono text-xs">Processing</span>
                   </>
                 ) : (
                   <>
                     <SendIcon className="size-3" />
-                    <span className="font-mono text-[11px]">Generate</span>
+                    <span className="font-mono text-xs">Generate</span>
                   </>
                 )}
               </Button>
@@ -397,13 +397,13 @@ export function ProcedureEditor({
         {(suggestionsLoading || (suggestions && suggestions.length > 0)) && (
           <>
             <div className="my-1 border-t" />
-            <span className="px-1 font-mono text-[10px] tracking-widest text-[#D97757] uppercase">
+            <span className="px-1 font-mono text-xs tracking-widest text-[#D97757] uppercase">
               Suggestions
             </span>
             {suggestionsLoading ? (
               <div className="flex items-center gap-2 border border-dashed border-[#D97757]/40 bg-[#D97757]/5 px-3 py-2.5">
                 <LoaderIcon className="size-3 animate-spin text-[#D97757]" />
-                <span className="font-mono text-[11px] text-[#D97757]/70">Thinking&hellip;</span>
+                <span className="font-mono text-xs text-[#D97757]/70">Thinking&hellip;</span>
               </div>
             ) : (
               suggestions?.map((s) => (
@@ -438,7 +438,7 @@ function SuggestionCard({
         type="button"
       >
         <LightbulbIcon className="size-3 shrink-0 text-[#D97757]" />
-        <span className="flex-1 font-mono text-[11px] leading-snug font-medium text-[#D97757]">
+        <span className="flex-1 font-mono text-xs leading-snug font-medium text-[#D97757]">
           {suggestion.title}
         </span>
       </button>
@@ -454,12 +454,12 @@ function SuggestionCard({
           <ChevronDownIcon
             className={`size-2.5 text-[#D97757]/50 transition-transform ${expanded ? "rotate-180" : ""}`}
           />
-          <span className="font-mono text-[9px] text-[#D97757]/50">
+          <span className="font-mono text-xs text-[#D97757]/50">
             {expanded ? "Hide" : "Details"}
           </span>
         </button>
         {expanded && (
-          <p className="px-3 pb-2.5 font-mono text-[10px] leading-relaxed text-[#D97757]/70">
+          <p className="px-3 pb-2.5 font-mono text-xs leading-relaxed text-[#D97757]/70">
             {suggestion.description}
           </p>
         )}
@@ -498,8 +498,8 @@ function StepCard({
   return (
     <div className="group bg-background border-x border-t last:border-b">
       {/* Header */}
-      <div className="bg-muted/60 group-hover:bg-muted/80 flex items-center gap-2 px-3 py-2 transition-colors">
-        <span className="text-muted-foreground w-5 text-left font-mono text-[10px] tabular-nums">
+      <div className="bg-muted/60 group-hover:bg-muted/80 flex items-center gap-2 px-3.5 py-2.5 transition-colors">
+        <span className="text-muted-foreground w-5 text-left font-mono text-xs tabular-nums">
           {String(index + 1).padStart(2, "0")}
         </span>
         <Icon className="text-muted-foreground size-3.5" />
@@ -507,7 +507,7 @@ function StepCard({
           {palette.label}
         </span>
         {action.type === "dispense" && action.reagent && (
-          <span className="text-muted-foreground font-mono text-[11px]">
+          <span className="text-muted-foreground font-mono text-xs">
             {reagentLabels[action.reagent].formula}
           </span>
         )}
@@ -539,14 +539,14 @@ function StepCard({
 
       {/* Spin sub-steps (computed, non-editable) */}
       {spinSteps && spinSteps.length > 0 && (
-        <div className="border-t border-dashed px-3 py-1.5">
+        <div className="border-t border-dashed px-3.5 py-2">
           {spinSteps.map((spin, i) => (
             <div
               className="text-muted-foreground flex items-center gap-2 py-0.5"
               key={`${spin.from}-${spin.to}-${i}`}
             >
               <RotateCcwIcon className="size-3 shrink-0" />
-              <span className="font-mono text-[11px]">
+              <span className="font-mono text-xs">
                 Spin {reagentLabels[spin.from].formula} &rarr; {reagentLabels[spin.to].formula}
                 <span className="text-muted-foreground/50 ml-1">
                   ({spin.degrees > 0 ? "+" : ""}
@@ -559,7 +559,7 @@ function StepCard({
       )}
 
       {/* Fields */}
-      <div className="border-t px-3 py-2.5">
+      <div className="border-t px-3.5 py-2.5">
         {action.type === "dispense" && (
           <DispenseFields action={action} onUpdate={onUpdate} showValidation={showValidation} />
         )}
@@ -567,7 +567,7 @@ function StepCard({
           <StirFields action={action} onUpdate={onUpdate} showValidation={showValidation} />
         )}
         {action.type === "cleanup" && (
-          <p className="text-muted-foreground font-mono text-[11px]">
+          <p className="text-muted-foreground font-mono text-xs">
             Remove current materials and replace with a fresh flask.
           </p>
         )}
@@ -582,7 +582,7 @@ const selectBase =
   "bg-background text-foreground border px-2 py-1 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-foreground/50";
 const inputBase =
   "bg-background text-foreground w-16 border px-2 py-1 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-foreground/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
-const fieldLabelClass = "text-muted-foreground font-mono text-[10px] uppercase tracking-wider";
+const fieldLabelClass = "text-muted-foreground font-mono text-xs uppercase tracking-wider";
 const errorClass = "border-red-400 ring-1 ring-red-400/30";
 
 // ── Dispense fields ────────────────────────────────────────────────────────

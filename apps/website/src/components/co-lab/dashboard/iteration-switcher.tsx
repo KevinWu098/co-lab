@@ -1,6 +1,6 @@
 "use client";
 
-import { BotIcon, BotOffIcon, PlusIcon } from "lucide-react";
+import { BotIcon, BotOffIcon, PlusIcon, ZapIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
@@ -106,17 +106,30 @@ export function IterationSwitcher({
 
       <div className="flex">
         {iterations.length > 0 && (
-          <Button
-            className="rounded-r-none"
-            onClick={() =>
-              router.push(`/dashboard/experiment/${experiment.id}/iterate`)
-            }
-            size="sm"
-            variant="outline"
-          >
-            <PlusIcon />
-            New iteration
-          </Button>
+          <>
+            <Button
+              aria-label="Run experiment"
+              className="rounded-r-none border-green-600 bg-green-600 text-white hover:bg-green-700 hover:border-green-700"
+              onClick={() => {
+                // TODO: trigger hardware execution
+              }}
+              size="sm"
+            >
+              <ZapIcon className="size-4" />
+              Start Experiment
+            </Button>
+            <Button
+              className="rounded-none border-l-0"
+              onClick={() =>
+                router.push(`/dashboard/experiment/${experiment.id}/iterate`)
+              }
+              size="sm"
+              variant="outline"
+            >
+              <PlusIcon />
+              New iteration
+            </Button>
+          </>
         )}
         <Button
           aria-label={chatVisible ? "Hide chat" : "Show chat"}

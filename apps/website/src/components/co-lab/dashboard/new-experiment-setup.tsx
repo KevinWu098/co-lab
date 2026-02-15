@@ -511,7 +511,7 @@ export function NewExperimentSetup({
 
                     {/* Outline */}
                     <div className="w-md shrink-0 overflow-y-auto border-l p-3">
-                      <p className="mb-2 font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                      <p className="mb-2 font-mono text-[11px] text-muted-foreground uppercase tracking-widest">
                         Outline
                       </p>
                       {headings.length > 0 ? (

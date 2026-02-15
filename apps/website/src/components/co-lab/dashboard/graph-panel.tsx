@@ -383,7 +383,7 @@ export function GraphPanel() {
                   key={g.id}
                   className="relative min-h-0 min-w-0 overflow-hidden rounded-md border"
                 >
-                  <span className="text-muted-foreground absolute top-2 left-3 z-10 text-[0.6rem] font-medium uppercase tracking-wider">
+                  <span className="text-muted-foreground absolute top-2 left-3 z-10 text-[0.7rem] font-medium uppercase tracking-wider">
                     {g.label}
                   </span>
                   <div className="absolute inset-0 p-2 pt-6">
@@ -398,7 +398,7 @@ export function GraphPanel() {
 
       {/* Sidebar */}
       <div className="flex w-64 flex-col gap-1 border-l p-3">
-        <span className="text-muted-foreground mb-1 px-2 font-mono text-[0.65rem] uppercase tracking-wider">
+        <span className="text-muted-foreground mb-1 px-2 font-mono text-xs uppercase tracking-wider">
           Metrics
         </span>
         {GRAPHS.map((g) => {
@@ -421,7 +421,7 @@ export function GraphPanel() {
               <div className="flex flex-1 flex-col text-left">
                 <span>{g.label}</span>
                 {g.subtitle && (
-                  <span className="text-muted-foreground text-[0.6rem] leading-tight">
+                  <span className="text-muted-foreground text-[0.7rem] leading-tight">
                     {g.subtitle}
                   </span>
                 )}

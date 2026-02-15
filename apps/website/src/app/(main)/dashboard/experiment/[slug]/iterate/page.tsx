@@ -8,7 +8,7 @@ import {
   ScrollTextIcon,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ProcedureEditor,
   type ProcedureSuggestion,
@@ -105,8 +105,30 @@ export default function IteratePage() {
       .finally(() => setSuggestionsLoading(false));
   }, [experiment]);
 
+  const [showValidation, setShowValidation] = useState(false);
+
+  const procedureValid = useMemo(() => {
+    if (newSteps.length === 0) return false;
+    return newSteps.every(({ action }) => {
+      switch (action.type) {
+        case "dispense":
+          return action.reagent != null && action.amount != null && action.unit != null;
+        case "stir":
+          return action.duration != null && action.unit != null;
+        case "cleanup":
+          return true;
+        default:
+          return false;
+      }
+    });
+  }, [newSteps]);
+
   const handleConfirm = useCallback(() => {
     if (!experiment) return;
+    if (!procedureValid) {
+      setShowValidation(true);
+      return;
+    }
 
     const nextNumber = experiment.iterations.length + 1;
     const newIteration = {
@@ -117,12 +139,12 @@ export default function IteratePage() {
     };
 
     updateExperiment(experiment.id, {
-      iterations: [...experiment.iterations, newIteration],
+      iterations: [newIteration, ...experiment.iterations],
       procedure: newSteps,
     });
 
     router.push(`/dashboard/experiment/${experiment.id}`);
-  }, [experiment, newSteps, updateExperiment, router]);
+  }, [experiment, procedureValid, newSteps, updateExperiment, router]);
 
   if (!experiment) {
     return null;
@@ -163,7 +185,7 @@ export default function IteratePage() {
           >
             Cancel
           </Button>
-          <Button className="rounded-l-none border-l-0" onClick={handleConfirm} size="sm">
+          <Button className="rounded-l-none border-l-0" disabled={agentLoading} onClick={handleConfirm} size="sm">
             Confirm iteration
           </Button>
         </div>
@@ -207,6 +229,7 @@ export default function IteratePage() {
               onChange={setNewSteps}
               pendingAgentPrompt={pendingPrompt}
               onPendingAgentPromptConsumed={() => setPendingPrompt(undefined)}
+              showValidation={showValidation}
               suggestions={suggestions}
               suggestionsLoading={suggestionsLoading}
               onSuggestionClick={handleSuggestionClick}

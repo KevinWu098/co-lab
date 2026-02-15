@@ -44,7 +44,7 @@ function ToolLoading({ toolName, query }: { toolName: string; query?: string }) 
   return (
     <div className="flex items-center gap-2 py-1.5">
       <LoaderIcon className="text-muted-foreground size-3 animate-spin" />
-      <span className="text-muted-foreground font-mono text-[0.65rem]">
+      <span className="text-muted-foreground font-mono text-xs">
         {label}
         {query ? <> for &ldquo;{query}&rdquo;</> : null}&hellip;
       </span>
@@ -65,7 +65,7 @@ function ArxivResults({ papers }: { papers: ArxivPaper[] }) {
         type="button"
       >
         <BookOpenIcon className="size-3" />
-        <span className="font-mono text-[0.65rem]">
+        <span className="font-mono text-xs">
           {papers.length} paper{papers.length !== 1 ? "s" : ""} found
         </span>
         <ChevronDownIcon className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -85,20 +85,20 @@ function ArxivResults({ papers }: { papers: ArxivPaper[] }) {
                 <h4 className="font-mono text-xs leading-snug font-medium">{paper.title}</h4>
                 <ExternalLinkIcon className="text-muted-foreground size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
-              <p className="text-muted-foreground mt-1 font-mono text-[0.6rem]">
+              <p className="text-muted-foreground mt-1 font-mono text-[0.7rem]">
                 {paper.authors.slice(0, 3).join(", ")}
                 {paper.authors.length > 3 ? ` +${paper.authors.length - 3}` : ""}
               </p>
-              <p className="text-muted-foreground mt-1 line-clamp-2 text-[0.6rem] leading-relaxed">
+              <p className="text-muted-foreground mt-1 line-clamp-2 text-[0.7rem] leading-relaxed">
                 {paper.abstract}
               </p>
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-muted-foreground/60 font-mono text-[0.55rem]">
+                <span className="text-muted-foreground/60 font-mono text-xs">
                   {paper.arxivId}
                 </span>
                 {paper.categories.slice(0, 2).map((cat) => (
                   <span
-                    className="bg-muted text-muted-foreground rounded px-1 py-0.5 font-mono text-[0.55rem]"
+                    className="bg-muted text-muted-foreground rounded px-1 py-0.5 font-mono text-xs"
                     key={cat}
                   >
                     {cat}
@@ -134,7 +134,7 @@ function WebSearchSources({ output }: { output: unknown }) {
         type="button"
       >
         <GlobeIcon className="size-3" />
-        <span className="font-mono text-[0.65rem]">
+        <span className="font-mono text-xs">
           {sources.length > 0
             ? `${sources.length} source${sources.length !== 1 ? "s" : ""}`
             : "Web search complete"}
@@ -155,7 +155,7 @@ function WebSearchSources({ output }: { output: unknown }) {
               target="_blank"
             >
               <ExternalLinkIcon className="size-2.5 shrink-0" />
-              <span className="truncate font-mono text-[0.6rem]">{source.title || source.url}</span>
+              <span className="truncate font-mono text-[0.7rem]">{source.title || source.url}</span>
             </a>
           ))}
         </div>
@@ -167,7 +167,7 @@ function WebSearchSources({ output }: { output: unknown }) {
 function ToolError({ error }: { error?: string }) {
   return (
     <div className="text-destructive flex items-center gap-1.5 py-1.5">
-      <span className="font-mono text-[0.65rem]">Tool error: {error || "Unknown error"}</span>
+      <span className="font-mono text-xs">Tool error: {error || "Unknown error"}</span>
     </div>
   );
 }
@@ -182,11 +182,11 @@ function GenericToolResult({ toolName, output }: { toolName: string; output: unk
         onClick={() => setOpen(!open)}
         type="button"
       >
-        <span className="font-mono text-[0.65rem]">{toolName} result</span>
+        <span className="font-mono text-xs">{toolName} result</span>
         <ChevronDownIcon className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <pre className="bg-muted mt-1 max-h-40 overflow-auto rounded p-2 font-mono text-[0.6rem]">
+        <pre className="bg-muted mt-1 max-h-40 overflow-auto rounded p-2 font-mono text-[0.7rem]">
           {JSON.stringify(output, null, 2)}
         </pre>
       )}
@@ -269,7 +269,7 @@ export function Chat({ expanded = false, onToggleExpand }: ChatProps) {
       )}
       <div className="flex items-center gap-2 border-b px-4 py-3">
         <BeakerIcon className="text-muted-foreground size-3.5" />
-        <span className="text-muted-foreground font-mono text-[0.65rem] font-medium tracking-widest uppercase">
+        <span className="text-muted-foreground font-mono text-xs font-medium tracking-widest uppercase">
           Lab Assistant
         </span>
         <Pulse className="ml-auto" variant={pulseVariant} />

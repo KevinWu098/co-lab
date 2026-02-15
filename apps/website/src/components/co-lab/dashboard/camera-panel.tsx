@@ -56,7 +56,7 @@ export function CameraPanel() {
       </div>
 
       <div className="flex w-64 flex-col gap-1 border-l p-3">
-        <span className="text-muted-foreground mb-1 px-2 font-mono text-[0.65rem] uppercase tracking-wider">
+        <span className="text-muted-foreground mb-1 px-2 font-mono text-xs uppercase tracking-wider">
           Sources
         </span>
         {CAMERAS.map((cam) => {

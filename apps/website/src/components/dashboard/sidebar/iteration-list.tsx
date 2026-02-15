@@ -44,7 +44,7 @@ export function IterationList({
       {hasMore && !expanded && (
         <SidebarMenuItem>
           <button
-            className="flex w-full cursor-pointer items-center gap-1 py-1 pl-8 font-mono text-[0.6rem] text-muted-foreground transition-colors hover:text-foreground"
+            className="flex w-full cursor-pointer items-center gap-1 py-1 pl-8 font-mono text-[0.7rem] text-muted-foreground transition-colors hover:text-foreground"
             onClick={() => setExpanded(true)}
             type="button"
           >
@@ -57,7 +57,7 @@ export function IterationList({
       {hasMore && expanded && (
         <SidebarMenuItem>
           <button
-            className="flex w-full cursor-pointer items-center gap-1 py-1 pl-8 font-mono text-[0.6rem] text-muted-foreground transition-colors hover:text-foreground"
+            className="flex w-full cursor-pointer items-center gap-1 py-1 pl-8 font-mono text-[0.7rem] text-muted-foreground transition-colors hover:text-foreground"
             onClick={() => setExpanded(false)}
             type="button"
           >
