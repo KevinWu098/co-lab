@@ -5,8 +5,11 @@ import {
   ChevronUpIcon,
   DropletsIcon,
   FileTextIcon,
+  LightbulbIcon,
+  LoaderIcon,
   RefreshCwIcon,
   RotateCcwIcon,
+  SendIcon,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
@@ -73,27 +76,58 @@ function createDefaultAction(type: DraftAction["type"]): DraftAction {
 
 // ── Main editor ────────────────────────────────────────────────────────────
 
+export interface ProcedureSuggestion {
+  title: string;
+  description: string;
+}
+
 export function ProcedureEditor({
   sourceFile,
   initialSteps,
   onChange,
+  showValidation,
+  onAgentSubmit,
+  agentLoading,
+  pendingAgentPrompt,
+  onPendingAgentPromptConsumed,
+  suggestions,
+  suggestionsLoading,
+  onSuggestionClick,
 }: {
   sourceFile?: File | null;
   initialSteps?: Action[] | null;
   onChange?: (steps: ProcedureStep[]) => void;
+  showValidation?: boolean;
+  onAgentSubmit?: (prompt: string) => void;
+  agentLoading?: boolean;
+  /** When set, autofills the agent prompt textarea and submits. */
+  pendingAgentPrompt?: string;
+  /** Called after the pending prompt has been consumed. */
+  onPendingAgentPromptConsumed?: () => void;
+  suggestions?: ProcedureSuggestion[];
+  suggestionsLoading?: boolean;
+  onSuggestionClick?: (suggestion: ProcedureSuggestion) => void;
 }) {
   const [steps, setSteps] = useState<ProcedureStep[]>([]);
-  const initializedRef = useRef(false);
+  const prevInitialStepsRef = useRef<string | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const [isDragging, setIsDragging] = useState(false);
+  const [agentPrompt, setAgentPrompt] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Autofill + submit from parent via pendingAgentPrompt
+  useEffect(() => {
+    if (pendingAgentPrompt && onAgentSubmit && !agentLoading) {
+      setAgentPrompt(pendingAgentPrompt);
+      onAgentSubmit(pendingAgentPrompt);
+      onPendingAgentPromptConsumed?.();
+    }
+  }, [pendingAgentPrompt, onAgentSubmit, agentLoading, onPendingAgentPromptConsumed]);
 
   // Source document preview URL
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
-  const isPdf =
-    sourceFile?.type === "application/pdf" ||
-    PDF_EXT_RE.test(sourceFile?.name ?? "");
+  const isPdf = sourceFile?.type === "application/pdf" || PDF_EXT_RE.test(sourceFile?.name ?? "");
 
   useEffect(() => {
     if (!sourceFile) {
@@ -105,15 +139,17 @@ export function ProcedureEditor({
     return () => URL.revokeObjectURL(url);
   }, [sourceFile]);
 
-  // Populate steps from agent output
+  // Populate steps from agent output (reactive — updates when initialSteps changes)
   useEffect(() => {
-    if (initialSteps && !initializedRef.current) {
-      initializedRef.current = true;
+    if (!initialSteps) return;
+    const serialized = JSON.stringify(initialSteps);
+    if (serialized !== prevInitialStepsRef.current) {
+      prevInitialStepsRef.current = serialized;
       setSteps(
         initialSteps.map((action) => ({
           id: nanoid(8),
           action,
-        }))
+        })),
       );
     }
   }, [initialSteps]);
@@ -126,10 +162,7 @@ export function ProcedureEditor({
   const spinMap = useMemo(() => computeAllSpins(steps), [steps]);
 
   const addStep = useCallback((type: DraftAction["type"]) => {
-    setSteps((prev) => [
-      ...prev,
-      { id: nanoid(8), action: createDefaultAction(type) },
-    ]);
+    setSteps((prev) => [...prev, { id: nanoid(8), action: createDefaultAction(type) }]);
   }, []);
 
   const removeStep = useCallback((id: string) => {
@@ -184,7 +217,7 @@ export function ProcedureEditor({
         addStep(type);
       }
     },
-    [addStep]
+    [addStep],
   );
 
   return (
@@ -195,21 +228,21 @@ export function ProcedureEditor({
           <Dialog>
             <DialogTrigger asChild>
               <button
-                className="flex shrink-0 cursor-pointer items-center gap-2 border-b bg-muted/30 px-4 py-2 transition-colors hover:bg-muted/50"
+                className="bg-muted/30 hover:bg-muted/50 flex shrink-0 cursor-pointer items-center gap-2 border-b px-4 py-2 transition-colors"
                 type="button"
               >
-                <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                <FileTextIcon className="text-muted-foreground size-3.5 shrink-0" />
                 <span className="flex-1 truncate text-left font-mono text-xs">
                   {sourceFile.name}
                 </span>
-                <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">
+                <span className="text-muted-foreground/60 text-[10px] tracking-wider uppercase">
                   Source
                 </span>
               </button>
             </DialogTrigger>
             <DialogContent className="flex h-[80vh] max-w-2xl flex-col gap-0 p-0">
               <DialogHeader className="shrink-0 border-b px-4 py-3">
-                <DialogTitle className="font-medium font-mono text-sm">
+                <DialogTitle className="font-mono text-sm font-medium">
                   {sourceFile.name}
                 </DialogTitle>
               </DialogHeader>
@@ -221,7 +254,7 @@ export function ProcedureEditor({
                     title="Source procedure"
                   />
                 ) : (
-                  <div className="flex flex-1 items-center justify-center font-mono text-muted-foreground text-sm">
+                  <div className="text-muted-foreground flex flex-1 items-center justify-center font-mono text-sm">
                     Preview not available for this file type
                   </div>
                 )}
@@ -243,12 +276,10 @@ export function ProcedureEditor({
           {steps.length === 0 ? (
             <div
               className={`flex flex-1 flex-col items-center justify-center gap-2 border border-dashed transition-colors ${
-                isDragging
-                  ? "border-foreground/30 bg-muted/30"
-                  : "border-transparent"
+                isDragging ? "border-foreground/30 bg-muted/30" : "border-transparent"
               } m-3`}
             >
-              <p className="font-mono text-muted-foreground text-sm">
+              <p className="text-muted-foreground font-mono text-sm">
                 {isDragging ? "Drop here" : "No steps yet"}
               </p>
               {!isDragging && (
@@ -267,6 +298,7 @@ export function ProcedureEditor({
                   onMoveUp={() => moveStep(step.id, -1)}
                   onRemove={() => removeStep(step.id)}
                   onUpdate={(action) => updateStep(step.id, action)}
+                  showValidation={showValidation}
                   spinSteps={spinMap.get(step.id)}
                   step={step}
                   totalSteps={steps.length}
@@ -277,29 +309,30 @@ export function ProcedureEditor({
               <div
                 className={`mt-0 flex items-center justify-center border border-dashed transition-colors ${
                   isDragging
-                    ? "h-10 border-foreground/30 bg-muted/30"
-                    : "h-0 border-muted-foreground/20 text-muted-foreground/30"
+                    ? "border-foreground/30 bg-muted/30 h-10"
+                    : "border-muted-foreground/20 text-muted-foreground/30 h-0"
                 }`}
               >
                 {isDragging && (
-                  <span className="font-mono text-muted-foreground text-xs">
-                    Drop here
-                  </span>
+                  <span className="text-muted-foreground font-mono text-xs">Drop here</span>
                 )}
               </div>
+
+              {/* what the hell, sure */}
+              <div className="invisible h-4 w-full">spacer</div>
             </div>
           )}
         </div>
       </div>
 
       {/* ── Action palette ── */}
-      <div className="flex w-md shrink-0 flex-col gap-2 border-l p-4">
-        <span className="px-1 font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+      <div className="flex w-xs shrink-0 flex-col gap-2 overflow-y-auto border-l p-4">
+        <span className="text-muted-foreground px-1 font-mono text-[10px] tracking-widest uppercase">
           Actions
         </span>
         {ACTION_PALETTE.map((item) => (
           <button
-            className="flex cursor-grab flex-col items-center gap-1.5 border bg-background p-3 transition-colors hover:border-foreground/25 hover:bg-muted/30 active:cursor-grabbing"
+            className="bg-background hover:border-foreground/25 hover:bg-muted/30 flex cursor-grab flex-col items-center gap-1.5 border p-3 transition-colors active:cursor-grabbing"
             draggable
             key={item.type}
             onClick={() => addStep(item.type)}
@@ -307,12 +340,129 @@ export function ProcedureEditor({
             onDragStart={(e) => handleDragStart(e, item.type)}
             type="button"
           >
-            <item.icon className="size-3.5 text-muted-foreground" />
-            <span className="font-medium font-mono text-[11px]">
-              {item.label}
-            </span>
+            <item.icon className="text-muted-foreground size-3.5" />
+            <span className="font-mono text-[11px] font-medium">{item.label}</span>
           </button>
         ))}
+
+        {/* ── Agent ── */}
+        {onAgentSubmit && (
+          <>
+            <div className="my-1 border-t" />
+            <span className="text-muted-foreground px-1 font-mono text-[10px] tracking-widest uppercase">
+              Agent
+            </span>
+            <div className="flex flex-col gap-2">
+              <textarea
+                className="bg-background text-foreground placeholder:text-muted-foreground/50 focus:ring-foreground/50 min-h-[80px] resize-none border p-2 font-mono text-xs focus:ring-1 focus:outline-none disabled:opacity-50"
+                disabled={agentLoading}
+                onChange={(e) => setAgentPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "Enter" &&
+                    (e.metaKey || e.ctrlKey) &&
+                    agentPrompt.trim() &&
+                    !agentLoading
+                  ) {
+                    onAgentSubmit(agentPrompt.trim());
+                  }
+                }}
+                placeholder="Describe changes to the procedure..."
+                value={agentPrompt}
+              />
+              <Button
+                className="w-full gap-1.5"
+                disabled={!agentPrompt.trim() || agentLoading}
+                onClick={() => onAgentSubmit(agentPrompt.trim())}
+                size="sm"
+                variant="outline"
+              >
+                {agentLoading ? (
+                  <>
+                    <LoaderIcon className="size-3 animate-spin" />
+                    <span className="font-mono text-[11px]">Processing</span>
+                  </>
+                ) : (
+                  <>
+                    <SendIcon className="size-3" />
+                    <span className="font-mono text-[11px]">Generate</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* ── Suggestions ── */}
+        {(suggestionsLoading || (suggestions && suggestions.length > 0)) && (
+          <>
+            <div className="my-1 border-t" />
+            <span className="px-1 font-mono text-[10px] tracking-widest text-[#D97757] uppercase">
+              Suggestions
+            </span>
+            {suggestionsLoading ? (
+              <div className="flex items-center gap-2 border border-dashed border-[#D97757]/40 bg-[#D97757]/5 px-3 py-2.5">
+                <LoaderIcon className="size-3 animate-spin text-[#D97757]" />
+                <span className="font-mono text-[11px] text-[#D97757]/70">Thinking&hellip;</span>
+              </div>
+            ) : (
+              suggestions?.map((s) => (
+                <SuggestionCard
+                  key={s.title}
+                  onClick={() => onSuggestionClick?.(s)}
+                  suggestion={s}
+                />
+              ))
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SuggestionCard({
+  suggestion,
+  onClick,
+}: {
+  suggestion: ProcedureSuggestion;
+  onClick: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="flex flex-col border border-dashed border-[#D97757]/40 bg-[#D97757]/5 transition-colors hover:border-[#D97757]/60 hover:bg-[#D97757]/10">
+      <button
+        className="flex cursor-pointer items-center gap-2 px-3 py-2.5 text-left"
+        onClick={onClick}
+        type="button"
+      >
+        <LightbulbIcon className="size-3 shrink-0 text-[#D97757]" />
+        <span className="flex-1 font-mono text-[11px] leading-snug font-medium text-[#D97757]">
+          {suggestion.title}
+        </span>
+      </button>
+      <div className="border-t border-dashed border-[#D97757]/20">
+        <button
+          className="flex w-full cursor-pointer items-center gap-1 px-3 py-1 text-left"
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpanded((v) => !v);
+          }}
+          type="button"
+        >
+          <ChevronDownIcon
+            className={`size-2.5 text-[#D97757]/50 transition-transform ${expanded ? "rotate-180" : ""}`}
+          />
+          <span className="font-mono text-[9px] text-[#D97757]/50">
+            {expanded ? "Hide" : "Details"}
+          </span>
+        </button>
+        {expanded && (
+          <p className="px-3 pb-2.5 font-mono text-[10px] leading-relaxed text-[#D97757]/70">
+            {suggestion.description}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -325,6 +475,7 @@ function StepCard({
   index,
   totalSteps,
   spinSteps,
+  showValidation,
   onUpdate,
   onRemove,
   onMoveUp,
@@ -334,29 +485,29 @@ function StepCard({
   index: number;
   totalSteps: number;
   spinSteps?: SpinStep[];
+  showValidation?: boolean;
   onUpdate: (action: DraftAction) => void;
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
   const { action } = step;
-  const palette =
-    ACTION_PALETTE.find((a) => a.type === action.type) ?? ACTION_PALETTE[0];
+  const palette = ACTION_PALETTE.find((a) => a.type === action.type) ?? ACTION_PALETTE[0];
   const Icon = palette.icon;
 
   return (
-    <div className="group border-x border-t bg-background first:rounded-t last:rounded-b last:border-b">
+    <div className="group bg-background border-x border-t last:border-b">
       {/* Header */}
-      <div className="flex items-center gap-2 bg-muted/60 px-3 py-2 transition-colors group-hover:bg-muted/80">
-        <span className="w-5 text-right font-mono text-[10px] text-muted-foreground tabular-nums">
+      <div className="bg-muted/60 group-hover:bg-muted/80 flex items-center gap-2 px-3 py-2 transition-colors">
+        <span className="text-muted-foreground w-5 text-left font-mono text-[10px] tabular-nums">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <Icon className="size-3.5 text-muted-foreground" />
-        <span className="font-medium font-mono text-xs uppercase tracking-wider">
+        <Icon className="text-muted-foreground size-3.5" />
+        <span className="font-mono text-xs font-medium tracking-wider uppercase">
           {palette.label}
         </span>
         {action.type === "dispense" && action.reagent && (
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="text-muted-foreground font-mono text-[11px]">
             {reagentLabels[action.reagent].formula}
           </span>
         )}
@@ -380,12 +531,7 @@ function StepCard({
           >
             <ChevronDownIcon className="size-3" />
           </Button>
-          <Button
-            className="size-6"
-            onClick={onRemove}
-            size="icon"
-            variant="ghost"
-          >
+          <Button className="size-6" onClick={onRemove} size="icon" variant="ghost">
             <XIcon className="size-3" />
           </Button>
         </div>
@@ -396,14 +542,13 @@ function StepCard({
         <div className="border-t border-dashed px-3 py-1.5">
           {spinSteps.map((spin, i) => (
             <div
-              className="flex items-center gap-2 py-0.5 text-muted-foreground"
+              className="text-muted-foreground flex items-center gap-2 py-0.5"
               key={`${spin.from}-${spin.to}-${i}`}
             >
               <RotateCcwIcon className="size-3 shrink-0" />
               <span className="font-mono text-[11px]">
-                Spin {reagentLabels[spin.from].formula} &rarr;{" "}
-                {reagentLabels[spin.to].formula}
-                <span className="ml-1 text-muted-foreground/50">
+                Spin {reagentLabels[spin.from].formula} &rarr; {reagentLabels[spin.to].formula}
+                <span className="text-muted-foreground/50 ml-1">
                   ({spin.degrees > 0 ? "+" : ""}
                   {spin.degrees}&deg;)
                 </span>
@@ -416,13 +561,13 @@ function StepCard({
       {/* Fields */}
       <div className="border-t px-3 py-2.5">
         {action.type === "dispense" && (
-          <DispenseFields action={action} onUpdate={onUpdate} />
+          <DispenseFields action={action} onUpdate={onUpdate} showValidation={showValidation} />
         )}
         {action.type === "stir" && (
-          <StirFields action={action} onUpdate={onUpdate} />
+          <StirFields action={action} onUpdate={onUpdate} showValidation={showValidation} />
         )}
         {action.type === "cleanup" && (
-          <p className="font-mono text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground font-mono text-[11px]">
             Remove current materials and replace with a fresh flask.
           </p>
         )}
@@ -433,28 +578,33 @@ function StepCard({
 
 // ── Shared field styles ────────────────────────────────────────────────────
 
-const selectClass =
+const selectBase =
   "bg-background text-foreground border px-2 py-1 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-foreground/50";
-const inputClass =
+const inputBase =
   "bg-background text-foreground w-16 border px-2 py-1 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-foreground/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
-const fieldLabelClass =
-  "text-muted-foreground font-mono text-[10px] uppercase tracking-wider";
+const fieldLabelClass = "text-muted-foreground font-mono text-[10px] uppercase tracking-wider";
+const errorClass = "border-red-400 ring-1 ring-red-400/30";
 
 // ── Dispense fields ────────────────────────────────────────────────────────
 
 function DispenseFields({
   action,
   onUpdate,
+  showValidation,
 }: {
   action: DraftDispense;
   onUpdate: (action: DraftAction) => void;
+  showValidation?: boolean;
 }) {
+  const reagentErr = showValidation && action.reagent == null;
+  const amountErr = showValidation && action.amount == null;
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <div className="flex items-center gap-1.5">
         <span className={fieldLabelClass}>Reagent</span>
         <select
-          className={selectClass}
+          className={`${selectBase} ${reagentErr ? errorClass : ""}`}
           onChange={(e) =>
             onUpdate({
               ...action,
@@ -475,7 +625,7 @@ function DispenseFields({
       <div className="flex items-center gap-1.5">
         <span className={fieldLabelClass}>Amount</span>
         <input
-          className={inputClass}
+          className={`${inputBase} ${amountErr ? errorClass : ""}`}
           min={0}
           onChange={(e) =>
             onUpdate({
@@ -489,10 +639,8 @@ function DispenseFields({
           value={action.amount ?? ""}
         />
         <select
-          className={selectClass}
-          onChange={(e) =>
-            onUpdate({ ...action, unit: e.target.value as VolumeUnit })
-          }
+          className={selectBase}
+          onChange={(e) => onUpdate({ ...action, unit: e.target.value as VolumeUnit })}
           value={action.unit ?? "mL"}
         >
           {volumeUnits.map((u) => (
@@ -511,16 +659,20 @@ function DispenseFields({
 function StirFields({
   action,
   onUpdate,
+  showValidation,
 }: {
   action: DraftStir;
   onUpdate: (action: DraftAction) => void;
+  showValidation?: boolean;
 }) {
+  const durationErr = showValidation && action.duration == null;
+
   return (
     <div className="flex items-center gap-x-3">
       <div className="flex items-center gap-1.5">
         <span className={fieldLabelClass}>Duration</span>
         <input
-          className={inputClass}
+          className={`${inputBase} ${durationErr ? errorClass : ""}`}
           min={0}
           onChange={(e) =>
             onUpdate({
@@ -534,10 +686,8 @@ function StirFields({
           value={action.duration ?? ""}
         />
         <select
-          className={selectClass}
-          onChange={(e) =>
-            onUpdate({ ...action, unit: e.target.value as TimeUnit })
-          }
+          className={selectBase}
+          onChange={(e) => onUpdate({ ...action, unit: e.target.value as TimeUnit })}
           value={action.unit ?? "s"}
         >
           {timeUnits.map((u) => (

@@ -54,23 +54,22 @@ export const searchArxiv = tool({
     "Search arxiv.org for academic research papers. Use this when the user asks about " +
     "scientific papers, recent research, preprints, or wants to find academic literature. " +
     "Returns paper titles, authors, abstracts, and links.",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe("Search query for arxiv papers"),
     maxResults: z
       .number()
-      .min(1)
-      .max(10)
-      .default(5)
-      .describe("Maximum number of results to return"),
+      .optional()
+      .describe("Maximum number of results to return, between 1 and 10. Defaults to 5."),
     category: z
       .string()
       .optional()
       .describe("Optional arxiv category filter, e.g. 'cs.AI', 'q-bio.BM', 'cond-mat'"),
   }),
   execute: async ({ query, maxResults, category }) => {
+    const limit = Math.min(10, Math.max(1, maxResults ?? 5));
     const searchTerms = category ? `cat:${category}+AND+all:${encodeURIComponent(query)}` : `all:${encodeURIComponent(query)}`;
 
-    const url = `https://export.arxiv.org/api/query?search_query=${searchTerms}&start=0&max_results=${maxResults}&sortBy=relevance&sortOrder=descending`;
+    const url = `https://export.arxiv.org/api/query?search_query=${searchTerms}&start=0&max_results=${limit}&sortBy=relevance&sortOrder=descending`;
 
     const res = await fetch(url);
     if (!res.ok) {

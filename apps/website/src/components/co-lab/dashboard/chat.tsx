@@ -12,7 +12,6 @@ import {
   Minimize2Icon,
 } from "lucide-react";
 import { useState } from "react";
-import type { ArxivPaper } from "@/lib/tools/arxiv";
 import {
   Conversation,
   ConversationContent,
@@ -28,6 +27,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Pulse } from "@/components/co-lab/pulse";
 import { Button } from "@/components/ui/button";
+import type { ArxivPaper } from "@/lib/tools/arxiv";
 
 /* ------------------------------------------------------------------ */
 /*  Tool result components                                            */
@@ -68,9 +68,7 @@ function ArxivResults({ papers }: { papers: ArxivPaper[] }) {
         <span className="font-mono text-[0.65rem]">
           {papers.length} paper{papers.length !== 1 ? "s" : ""} found
         </span>
-        <ChevronDownIcon
-          className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        <ChevronDownIcon className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
@@ -84,7 +82,7 @@ function ArxivResults({ papers }: { papers: ArxivPaper[] }) {
               target="_blank"
             >
               <div className="flex items-start justify-between gap-2">
-                <h4 className="font-mono text-xs font-medium leading-snug">{paper.title}</h4>
+                <h4 className="font-mono text-xs leading-snug font-medium">{paper.title}</h4>
                 <ExternalLinkIcon className="text-muted-foreground size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
               <p className="text-muted-foreground mt-1 font-mono text-[0.6rem]">
@@ -142,9 +140,7 @@ function WebSearchSources({ output }: { output: unknown }) {
             : "Web search complete"}
         </span>
         {sources.length > 0 && (
-          <ChevronDownIcon
-            className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
-          />
+          <ChevronDownIcon className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
         )}
       </button>
 
@@ -159,9 +155,7 @@ function WebSearchSources({ output }: { output: unknown }) {
               target="_blank"
             >
               <ExternalLinkIcon className="size-2.5 shrink-0" />
-              <span className="truncate font-mono text-[0.6rem]">
-                {source.title || source.url}
-              </span>
+              <span className="truncate font-mono text-[0.6rem]">{source.title || source.url}</span>
             </a>
           ))}
         </div>
@@ -189,9 +183,7 @@ function GenericToolResult({ toolName, output }: { toolName: string; output: unk
         type="button"
       >
         <span className="font-mono text-[0.65rem]">{toolName} result</span>
-        <ChevronDownIcon
-          className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        <ChevronDownIcon className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <pre className="bg-muted mt-1 max-h-40 overflow-auto rounded p-2 font-mono text-[0.6rem]">
@@ -263,7 +255,7 @@ export function Chat({ expanded = false, onToggleExpand }: ChatProps) {
 
   return (
     <div
-      className={`bg-background relative flex h-full flex-col border ${expanded ? "w-full flex-1" : "w-xs"}`}
+      className={`bg-background relative flex h-full min-h-0 flex-col border ${expanded ? "w-full flex-1" : "w-xs"}`}
     >
       {expanded && onToggleExpand && (
         <button
@@ -298,13 +290,13 @@ export function Chat({ expanded = false, onToggleExpand }: ChatProps) {
         )}
       </div>
 
-      <Conversation className="flex-1">
+      <Conversation className="min-h-0 flex-1 [&>div>div]:h-full [&>div>div]:overflow-y-auto">
         {messages.length === 0 ? (
-          <ConversationEmptyState className="gap-4 px-6">
-            <div className="text-muted-foreground flex size-10 items-center justify-center border border-dashed">
+          <ConversationEmptyState className="h-full gap-4 px-6">
+            <div className="text-muted-foreground flex size-10 max-h-10 items-center justify-center border border-dashed">
               <BeakerIcon className="size-5" />
             </div>
-            <div className="space-y-1.5">
+            <div className="h-fit max-h-fit space-y-1.5">
               <h3 className="font-mono text-sm font-medium">Co:Lab Assistant</h3>
               <p className="text-muted-foreground max-w-[30ch] text-xs leading-relaxed">
                 Ask about your experiment data, search arxiv for papers, or get real-time web
@@ -330,9 +322,7 @@ export function Chat({ expanded = false, onToggleExpand }: ChatProps) {
                       case "dynamic-tool":
                         return (
                           <ToolPart
-                            errorText={
-                              part.state === "output-error" ? part.errorText : undefined
-                            }
+                            errorText={part.state === "output-error" ? part.errorText : undefined}
                             input={part.input}
                             key={key}
                             output={"output" in part ? part.output : undefined}

@@ -37,7 +37,6 @@ export default function ExperimentPage() {
       };
       updateExperiment(experiment.id, {
         iterations: [firstIteration],
-        status: "idle" as const,
         procedure,
         reasoning,
         goals,

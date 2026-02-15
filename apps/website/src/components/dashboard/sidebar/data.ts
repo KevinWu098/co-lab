@@ -1,4 +1,16 @@
+import type { ProcedureStep } from "@/lib/schemas/procedure";
 import type { Experiment } from "./types";
+
+const proteinFoldingProcedure: ProcedureStep[] = [
+  { id: "pf-01", action: { type: "dispense", reagent: "A", amount: 30, unit: "mL" } },
+  { id: "pf-02", action: { type: "dispense", reagent: "B", amount: 5, unit: "mL" } },
+  { id: "pf-03", action: { type: "stir", duration: 10, unit: "s" } },
+  { id: "pf-04", action: { type: "dispense", reagent: "C", amount: 2, unit: "tsp" } },
+  { id: "pf-05", action: { type: "stir", duration: 5, unit: "s" } },
+  { id: "pf-06", action: { type: "dispense", reagent: "A", amount: 15, unit: "mL" } },
+  { id: "pf-07", action: { type: "stir", duration: 8, unit: "s" } },
+  { id: "pf-08", action: { type: "cleanup" } },
+];
 
 export const experiments: Experiment[] = [
   {
@@ -6,6 +18,20 @@ export const experiments: Experiment[] = [
     title: "Protein folding sim #12",
     status: "running",
     updatedAt: "2m ago",
+    procedure: proteinFoldingProcedure,
+    reasoning:
+      "The procedure begins by dispensing 30 mL of hydrogen peroxide as the primary substrate, " +
+      "followed by 5 mL of foaming agent to act as a surfactant for volume measurement. " +
+      "An initial 10-second stir ensures homogeneous mixing before introducing 2 tsp of yeast catalyst " +
+      "to initiate the decomposition reaction. A brief 5-second stir distributes the catalyst evenly. " +
+      "A second 15 mL addition of hydrogen peroxide extends the reaction duration for sustained observation. " +
+      "A final 8-second stir ensures complete mixing before cleanup resets the apparatus.",
+    goals: [
+      "Observe the exothermic decomposition reaction and measure peak temperature change",
+      "Record foam volume over time as a proxy for reaction rate",
+      "Determine whether a staged peroxide addition produces a more sustained reaction than a single dose",
+      "Collect temperature and volume data to calibrate sensor baselines for future experiments",
+    ],
     iterations: [
       {
         id: "exp-001-it-5",

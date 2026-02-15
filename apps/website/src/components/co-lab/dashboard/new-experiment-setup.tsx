@@ -90,6 +90,23 @@ export function NewExperimentSetup({
   const [agentTrace, setAgentTrace] = useState("");
   const instructionsRef = useRef<HTMLTextAreaElement>(null);
   const [editorSteps, setEditorSteps] = useState<ProcedureStep[]>([]);
+  const [showValidation, setShowValidation] = useState(false);
+
+  const procedureValid = useMemo(() => {
+    if (editorSteps.length === 0) return false;
+    return editorSteps.every(({ action }) => {
+      switch (action.type) {
+        case "dispense":
+          return action.reagent != null && action.amount != null && action.unit != null;
+        case "stir":
+          return action.duration != null && action.unit != null;
+        case "cleanup":
+          return true;
+        default:
+          return false;
+      }
+    });
+  }, [editorSteps]);
 
   const fileUrl = useMemo(
     () => (file ? URL.createObjectURL(file) : null),
@@ -286,7 +303,7 @@ export function NewExperimentSetup({
         type="single"
       >
         <AccordionItem
-          className="flex flex-col rounded-t-md border border-b-0 bg-background data-[state=open]:flex-1"
+          className="flex flex-col border border-b-0 bg-background data-[state=open]:flex-1"
           value="procedure"
         >
           <AccordionTrigger className="cursor-pointer px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
@@ -304,6 +321,7 @@ export function NewExperimentSetup({
                 initialSteps={initialSteps}
                 onChange={setEditorSteps}
                 onRetry={() => file && processFileWithAgent(file)}
+                showValidation={showValidation}
               />
             </div>
           </AccordionContent>
@@ -312,7 +330,7 @@ export function NewExperimentSetup({
         <AccordionItem
           className={cn(
             "flex flex-col border bg-background data-[state=open]:flex-1",
-            !agentTrace && "rounded-b-md",
+            !agentTrace && "",
             agentTrace && "border-b-0"
           )}
           value="agent"
@@ -526,7 +544,7 @@ export function NewExperimentSetup({
         {/* Agent Trace — only shown when an import was processed */}
         {agentTrace && (
           <AccordionItem
-            className="flex flex-col rounded-b-md border bg-background data-[state=open]:flex-1"
+            className="flex flex-col border bg-background data-[state=open]:flex-1"
             value="trace"
           >
             <AccordionTrigger className="cursor-pointer px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
@@ -561,6 +579,10 @@ export function NewExperimentSetup({
         <Button
           disabled={agentLoading}
           onClick={() => {
+            if (!procedureValid) {
+              setShowValidation(true);
+              return;
+            }
             setStep(null);
             onConfirm?.({
               procedure: editorSteps,
@@ -579,6 +601,22 @@ export function NewExperimentSetup({
 
 /* ── Extracted to reduce cognitive complexity ── */
 
+function CountdownTimer({ seconds }: { seconds: number }) {
+  const [remaining, setRemaining] = useState(seconds * 10);
+
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const id = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 100);
+    return () => clearInterval(id);
+  }, [remaining]);
+
+  return (
+    <span className="text-primary font-mono text-2xl font-semibold tabular-nums">
+      {(remaining / 10).toFixed(1)}s
+    </span>
+  );
+}
+
 function ProcedureContent({
   agentLoading,
   agentError,
@@ -586,6 +624,7 @@ function ProcedureContent({
   initialSteps,
   onChange,
   onRetry,
+  showValidation,
 }: {
   agentLoading: boolean;
   agentError: string | null;
@@ -593,14 +632,18 @@ function ProcedureContent({
   initialSteps: Action[] | null;
   onChange: (steps: ProcedureStep[]) => void;
   onRetry: () => void;
+  showValidation?: boolean;
 }) {
   if (agentLoading) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <LoaderIcon className="size-5 animate-spin text-muted-foreground" />
-        <p className="font-mono text-muted-foreground text-sm">
-          Processing procedure&hellip;
-        </p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">
+        <CountdownTimer seconds={5} />
+        <div className="flex items-center gap-2">
+          <LoaderIcon className="text-muted-foreground size-3.5 animate-spin" />
+          <p className="text-muted-foreground font-mono text-sm">
+            Processing procedure&hellip;
+          </p>
+        </div>
         <p className="text-muted-foreground/60 text-xs">
           The agent is reading your document and mapping it to lab actions.
         </p>
@@ -623,6 +666,7 @@ function ProcedureContent({
     <ProcedureEditor
       initialSteps={initialSteps}
       onChange={onChange}
+      showValidation={showValidation}
       sourceFile={file}
     />
   );
