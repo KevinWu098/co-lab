@@ -1,7 +1,7 @@
 "use client";
 
 import { BotIcon, BotOffIcon, PlusIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
 import type { Experiment } from "@/components/dashboard/sidebar/types";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,16 @@ export function IterationSwitcher({
   const iterations = experiment.iterations;
   const { updateExperiment } = useExperiments();
   const [selected, setSelected] = useState(iterations[0]?.id ?? "");
+
+  // Sync selection when iterations change (e.g. after setup confirm)
+  useEffect(() => {
+    if (iterations.length > 0 && !iterations.some((it) => it.id === selected)) {
+      const last = iterations.at(-1);
+      if (last) {
+        setSelected(last.id);
+      }
+    }
+  }, [iterations, selected]);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(experiment.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,25 +56,29 @@ export function IterationSwitcher({
       <div className="flex items-center">
         {editing ? (
           <input
-            ref={(el) => {
-              (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
-              el?.focus();
-            }}
-            className="bg-background flex h-9 max-w-56 items-center border px-3 text-sm font-medium outline-none focus:ring-1 focus:ring-ring"
+            className="flex h-9 max-w-56 items-center border bg-background px-3 font-medium text-sm outline-none focus:ring-1 focus:ring-ring"
             onBlur={commitTitle}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") commitTitle();
+              if (e.key === "Enter") {
+                commitTitle();
+              }
               if (e.key === "Escape") {
                 setTitle(experiment.title);
                 setEditing(false);
               }
             }}
+            ref={(el) => {
+              (
+                inputRef as React.MutableRefObject<HTMLInputElement | null>
+              ).current = el;
+              el?.focus();
+            }}
             value={title}
           />
         ) : (
           <button
-            className="bg-background flex h-9 max-w-56 cursor-text items-center border px-3 text-sm font-medium"
+            className="flex h-9 max-w-56 cursor-text items-center border bg-background px-3 font-medium text-sm"
             onClick={() => setEditing(true)}
             type="button"
           >
@@ -74,7 +88,7 @@ export function IterationSwitcher({
 
         {iterations.length > 0 && (
           <Select onValueChange={setSelected} value={selected}>
-            <SelectTrigger className="bg-background rounded-l-none border-l-0 px-2 [&>span]:hidden">
+            <SelectTrigger className="rounded-l-none border-l-0 bg-background px-2 [&>span]:hidden">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -102,7 +116,11 @@ export function IterationSwitcher({
           size="sm"
           variant="outline"
         >
-          {chatVisible ? <BotIcon className="size-4" /> : <BotOffIcon className="size-4" />}
+          {chatVisible ? (
+            <BotIcon className="size-4" />
+          ) : (
+            <BotOffIcon className="size-4" />
+          )}
         </Button>
       </div>
     </div>

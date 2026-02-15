@@ -76,12 +76,16 @@ function createDefaultAction(type: DraftAction["type"]): DraftAction {
 export function ProcedureEditor({
   sourceFile,
   initialSteps,
+  onChange,
 }: {
   sourceFile?: File | null;
   initialSteps?: Action[] | null;
+  onChange?: (steps: ProcedureStep[]) => void;
 }) {
   const [steps, setSteps] = useState<ProcedureStep[]>([]);
   const initializedRef = useRef(false);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   const [isDragging, setIsDragging] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -113,6 +117,11 @@ export function ProcedureEditor({
       );
     }
   }, [initialSteps]);
+
+  // Notify parent when steps change
+  useEffect(() => {
+    onChangeRef.current?.(steps);
+  }, [steps]);
 
   const spinMap = useMemo(() => computeAllSpins(steps), [steps]);
 
@@ -222,8 +231,8 @@ export function ProcedureEditor({
         )}
 
         {/* ── Step list ── */}
-        {/* biome-ignore lint/a11y/useSemanticElements: drop target region */}
-        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag-and-drop target */}
+        {/* biome-ignore lint/a11y/useSemanticElements: drag-and-drop target needs div for flex layout */}
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag-and-drop event handlers */}
         <div
           className="flex min-h-0 flex-1 flex-col overflow-y-auto"
           onDragOver={handleDragOver}

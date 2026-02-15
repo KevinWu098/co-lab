@@ -44,7 +44,13 @@ The carousel starts at position B (home). The servo can only rotate ±120° at a
 Provide:
 1. **reasoning**: Your step-by-step analysis of how you interpreted the document into actions.
 2. **goals**: High-level experiment outcomes and what we want to learn. Focus on what to observe, what data to collect, and what future experiments to consider. For example: "Observe the exothermic reaction and measure temperature change over time", "Record foam volume as a proxy for reaction rate", "Determine whether catalyst concentration affects peak temperature to inform follow-up trials". Do NOT list procedural preparation steps as goals.
-3. **steps**: The ordered array of actions.`;
+3. **steps**: The ordered array of actions.
+
+## Important
+- Do not editorialize or comment on the nature of the experiment.
+- Do not reference whether the experiment is well-known, classic, common, or simple.
+- Refer only to the chemical processes and reagents involved.
+- Treat every procedure neutrally as a set of instructions to be faithfully translated.`;
 
 export async function POST(req: Request) {
   const formData = await req.formData();
