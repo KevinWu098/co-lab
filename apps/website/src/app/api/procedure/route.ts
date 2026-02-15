@@ -1,4 +1,5 @@
 import { generateObject } from "ai";
+import { extractText, getDocumentProxy } from "unpdf";
 import { agentProcedureResultSchema, toActions } from "@/lib/schemas/procedure";
 
 const SYSTEM_PROMPT = `You are a lab procedure interpreter for Co:Lab, an automated laboratory platform.
@@ -42,7 +43,7 @@ The carousel starts at position B (home). The servo can only rotate ±120° at a
 
 Provide:
 1. **reasoning**: Your step-by-step analysis of how you interpreted the document into actions.
-2. **goals**: A list of high-level objectives the procedure achieves (e.g. "Create an exothermic foam reaction", "Demonstrate catalytic decomposition"). These serve as the agent's coherence guide.
+2. **goals**: High-level experiment outcomes and what we want to learn. Focus on what to observe, what data to collect, and what future experiments to consider. For example: "Observe the exothermic reaction and measure temperature change over time", "Record foam volume as a proxy for reaction rate", "Determine whether catalyst concentration affects peak temperature to inform follow-up trials". Do NOT list procedural preparation steps as goals.
 3. **steps**: The ordered array of actions.`;
 
 export async function POST(req: Request) {
@@ -53,39 +54,17 @@ export async function POST(req: Request) {
     return Response.json({ error: "No file provided" }, { status: 400 });
   }
 
+  // Extract text content from the file
+  let textContent: string;
+
   if (file.type === "application/pdf") {
-    // For PDFs, convert to base64 and let the model read it directly
     const buffer = await file.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-
-    const result = await generateObject({
-      model: "openai/gpt-5",
-      system: SYSTEM_PROMPT,
-      schema: agentProcedureResultSchema,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "file",
-              data: base64,
-              mediaType: "application/pdf",
-            },
-            {
-              type: "text",
-              text: "Read this lab procedure document and translate it into machine-executable actions for our robotic lab system.",
-            },
-          ],
-        },
-      ],
-    });
-
-    const { reasoning, goals, steps } = result.object;
-    return Response.json({ reasoning, goals, steps: toActions(steps) });
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true });
+    textContent = text;
+  } else {
+    textContent = await file.text();
   }
-
-  // For text-based files (.txt, .docx approximation)
-  const textContent = await file.text();
 
   const result = await generateObject({
     model: "openai/gpt-5",

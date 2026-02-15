@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+const PDF_EXT_RE = /\.pdf$/i;
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,7 +66,7 @@ function createDefaultAction(type: DraftAction["type"]): DraftAction {
       return { type: "dispense", unit: "mL" };
     case "stir":
       return { type: "stir", unit: "s" };
-    case "cleanup":
+    default:
       return { type: "cleanup" };
   }
 }
@@ -84,7 +87,9 @@ export function ProcedureEditor({
 
   // Source document preview URL
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
-  const isPdf = sourceFile?.type === "application/pdf" || /\.pdf$/i.test(sourceFile?.name ?? "");
+  const isPdf =
+    sourceFile?.type === "application/pdf" ||
+    PDF_EXT_RE.test(sourceFile?.name ?? "");
 
   useEffect(() => {
     if (!sourceFile) {
@@ -104,7 +109,7 @@ export function ProcedureEditor({
         initialSteps.map((action) => ({
           id: nanoid(8),
           action,
-        })),
+        }))
       );
     }
   }, [initialSteps]);
@@ -112,7 +117,10 @@ export function ProcedureEditor({
   const spinMap = useMemo(() => computeAllSpins(steps), [steps]);
 
   const addStep = useCallback((type: DraftAction["type"]) => {
-    setSteps((prev) => [...prev, { id: nanoid(8), action: createDefaultAction(type) }]);
+    setSteps((prev) => [
+      ...prev,
+      { id: nanoid(8), action: createDefaultAction(type) },
+    ]);
   }, []);
 
   const removeStep = useCallback((id: string) => {
@@ -126,9 +134,13 @@ export function ProcedureEditor({
   const moveStep = useCallback((id: string, direction: -1 | 1) => {
     setSteps((prev) => {
       const idx = prev.findIndex((s) => s.id === id);
-      if (idx < 0) return prev;
+      if (idx < 0) {
+        return prev;
+      }
       const newIdx = idx + direction;
-      if (newIdx < 0 || newIdx >= prev.length) return prev;
+      if (newIdx < 0 || newIdx >= prev.length) {
+        return prev;
+      }
       const next = [...prev];
       const temp = next[idx];
       next[idx] = next[newIdx];
@@ -163,52 +175,44 @@ export function ProcedureEditor({
         addStep(type);
       }
     },
-    [addStep],
+    [addStep]
   );
 
   return (
     <div className="flex h-full w-full overflow-hidden">
-      {/* ── Step list ── */}
-      {/* biome-ignore lint/a11y/useSemanticElements: drop target region */}
-      <div
-        role="list"
-        ref={listRef}
-        className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        {/* Source document bar */}
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        {/* Source document bar (pinned above scroll) */}
         {sourceFile && (
           <Dialog>
             <DialogTrigger asChild>
               <button
+                className="flex shrink-0 cursor-pointer items-center gap-2 border-b bg-muted/30 px-4 py-2 transition-colors hover:bg-muted/50"
                 type="button"
-                className="bg-muted/30 hover:bg-muted/50 flex shrink-0 cursor-pointer items-center gap-2 border-b px-4 py-2 transition-colors"
               >
-                <FileTextIcon className="text-muted-foreground size-3.5 shrink-0" />
+                <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate text-left font-mono text-xs">
                   {sourceFile.name}
                 </span>
-                <span className="text-muted-foreground/60 text-[10px] tracking-wider uppercase">
+                <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">
                   Source
                 </span>
               </button>
             </DialogTrigger>
             <DialogContent className="flex h-[80vh] max-w-2xl flex-col gap-0 p-0">
               <DialogHeader className="shrink-0 border-b px-4 py-3">
-                <DialogTitle className="font-mono text-sm font-medium">
+                <DialogTitle className="font-medium font-mono text-sm">
                   {sourceFile.name}
                 </DialogTitle>
               </DialogHeader>
               <div className="flex min-h-0 flex-1 flex-col">
                 {isPdf && sourceUrl ? (
                   <iframe
+                    className="flex-1"
                     src={`${sourceUrl}#toolbar=0`}
                     title="Source procedure"
-                    className="flex-1"
                   />
                 ) : (
-                  <div className="text-muted-foreground flex flex-1 items-center justify-center font-mono text-sm">
+                  <div className="flex flex-1 items-center justify-center font-mono text-muted-foreground text-sm">
                     Preview not available for this file type
                   </div>
                 )}
@@ -217,70 +221,87 @@ export function ProcedureEditor({
           </Dialog>
         )}
 
-        {steps.length === 0 ? (
-          <div
-            className={`flex flex-1 flex-col items-center justify-center gap-2 border border-dashed transition-colors ${
-              isDragging ? "border-foreground/30 bg-muted/30" : "border-transparent"
-            } m-3`}
-          >
-            <p className="text-muted-foreground font-mono text-sm">
-              {isDragging ? "Drop here" : "No steps yet"}
-            </p>
-            {!isDragging && (
-              <p className="text-muted-foreground/60 text-xs">
-                Drag an action from the palette or click to add.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="flex h-0 flex-col p-4">
-            {steps.map((step, index) => (
-              <StepCard
-                key={step.id}
-                step={step}
-                index={index}
-                totalSteps={steps.length}
-                spinSteps={spinMap.get(step.id)}
-                onUpdate={(action) => updateStep(step.id, action)}
-                onRemove={() => removeStep(step.id)}
-                onMoveUp={() => moveStep(step.id, -1)}
-                onMoveDown={() => moveStep(step.id, 1)}
-              />
-            ))}
-
-            {/* Drop hint at bottom */}
+        {/* ── Step list ── */}
+        {/* biome-ignore lint/a11y/useSemanticElements: drop target region */}
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag-and-drop target */}
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          ref={listRef}
+          role="list"
+        >
+          {steps.length === 0 ? (
             <div
-              className={`mt-0 flex items-center justify-center border border-dashed transition-colors ${
+              className={`flex flex-1 flex-col items-center justify-center gap-2 border border-dashed transition-colors ${
                 isDragging
-                  ? "border-foreground/30 bg-muted/30 h-10"
-                  : "text-muted-foreground/30 border-muted-foreground/20 h-0"
-              }`}
+                  ? "border-foreground/30 bg-muted/30"
+                  : "border-transparent"
+              } m-3`}
             >
-              {isDragging && (
-                <span className="text-muted-foreground font-mono text-xs">Drop here</span>
+              <p className="font-mono text-muted-foreground text-sm">
+                {isDragging ? "Drop here" : "No steps yet"}
+              </p>
+              {!isDragging && (
+                <p className="text-muted-foreground/60 text-xs">
+                  Drag an action from the palette or click to add.
+                </p>
               )}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex h-0 flex-col p-4">
+              {steps.map((step, index) => (
+                <StepCard
+                  index={index}
+                  key={step.id}
+                  onMoveDown={() => moveStep(step.id, 1)}
+                  onMoveUp={() => moveStep(step.id, -1)}
+                  onRemove={() => removeStep(step.id)}
+                  onUpdate={(action) => updateStep(step.id, action)}
+                  spinSteps={spinMap.get(step.id)}
+                  step={step}
+                  totalSteps={steps.length}
+                />
+              ))}
+
+              {/* Drop hint at bottom */}
+              <div
+                className={`mt-0 flex items-center justify-center border border-dashed transition-colors ${
+                  isDragging
+                    ? "h-10 border-foreground/30 bg-muted/30"
+                    : "h-0 border-muted-foreground/20 text-muted-foreground/30"
+                }`}
+              >
+                {isDragging && (
+                  <span className="font-mono text-muted-foreground text-xs">
+                    Drop here
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Action palette ── */}
       <div className="flex w-md shrink-0 flex-col gap-2 border-l p-4">
-        <span className="text-muted-foreground px-1 font-mono text-[10px] tracking-widest uppercase">
+        <span className="px-1 font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
           Actions
         </span>
         {ACTION_PALETTE.map((item) => (
           <button
-            key={item.type}
-            type="button"
+            className="flex cursor-grab flex-col items-center gap-1.5 border bg-background p-3 transition-colors hover:border-foreground/25 hover:bg-muted/30 active:cursor-grabbing"
             draggable
-            onDragStart={(e) => handleDragStart(e, item.type)}
-            onDragEnd={handleDragEnd}
+            key={item.type}
             onClick={() => addStep(item.type)}
-            className="bg-background hover:border-foreground/25 hover:bg-muted/30 flex cursor-grab flex-col items-center gap-1.5 border p-3 transition-colors active:cursor-grabbing"
+            onDragEnd={handleDragEnd}
+            onDragStart={(e) => handleDragStart(e, item.type)}
+            type="button"
           >
-            <item.icon className="text-muted-foreground size-3.5" />
-            <span className="font-mono text-[11px] font-medium">{item.label}</span>
+            <item.icon className="size-3.5 text-muted-foreground" />
+            <span className="font-medium font-mono text-[11px]">
+              {item.label}
+            </span>
           </button>
         ))}
       </div>
@@ -310,46 +331,52 @@ function StepCard({
   onMoveDown: () => void;
 }) {
   const { action } = step;
-  const palette = ACTION_PALETTE.find((a) => a.type === action.type) ?? ACTION_PALETTE[0];
+  const palette =
+    ACTION_PALETTE.find((a) => a.type === action.type) ?? ACTION_PALETTE[0];
   const Icon = palette.icon;
 
   return (
-    <div className="bg-background group border-x border-t first:rounded-t last:rounded-b last:border-b">
+    <div className="group border-x border-t bg-background first:rounded-t last:rounded-b last:border-b">
       {/* Header */}
-      <div className="group-hover:bg-muted/40 flex items-center gap-2 px-3 py-2 transition-colors">
-        <span className="text-muted-foreground w-5 text-right font-mono text-[10px] tabular-nums">
+      <div className="flex items-center gap-2 px-3 py-2 transition-colors group-hover:bg-muted/40">
+        <span className="w-5 text-right font-mono text-[10px] text-muted-foreground tabular-nums">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <Icon className="text-muted-foreground size-3.5" />
-        <span className="font-mono text-xs font-medium tracking-wider uppercase">
+        <Icon className="size-3.5 text-muted-foreground" />
+        <span className="font-medium font-mono text-xs uppercase tracking-wider">
           {palette.label}
         </span>
         {action.type === "dispense" && action.reagent && (
-          <span className="text-muted-foreground font-mono text-[11px]">
+          <span className="font-mono text-[11px] text-muted-foreground">
             {reagentLabels[action.reagent].formula}
           </span>
         )}
 
         <div className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
           <Button
-            variant="ghost"
-            size="icon"
             className="size-6"
-            onClick={onMoveUp}
             disabled={index === 0}
+            onClick={onMoveUp}
+            size="icon"
+            variant="ghost"
           >
             <ChevronUpIcon className="size-3" />
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
             className="size-6"
-            onClick={onMoveDown}
             disabled={index === totalSteps - 1}
+            onClick={onMoveDown}
+            size="icon"
+            variant="ghost"
           >
             <ChevronDownIcon className="size-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="size-6" onClick={onRemove}>
+          <Button
+            className="size-6"
+            onClick={onRemove}
+            size="icon"
+            variant="ghost"
+          >
             <XIcon className="size-3" />
           </Button>
         </div>
@@ -360,13 +387,14 @@ function StepCard({
         <div className="border-t border-dashed px-3 py-1.5">
           {spinSteps.map((spin, i) => (
             <div
+              className="flex items-center gap-2 py-0.5 text-muted-foreground"
               key={`${spin.from}-${spin.to}-${i}`}
-              className="text-muted-foreground flex items-center gap-2 py-0.5"
             >
               <RotateCcwIcon className="size-3 shrink-0" />
               <span className="font-mono text-[11px]">
-                Spin {reagentLabels[spin.from].formula} &rarr; {reagentLabels[spin.to].formula}
-                <span className="text-muted-foreground/50 ml-1">
+                Spin {reagentLabels[spin.from].formula} &rarr;{" "}
+                {reagentLabels[spin.to].formula}
+                <span className="ml-1 text-muted-foreground/50">
                   ({spin.degrees > 0 ? "+" : ""}
                   {spin.degrees}&deg;)
                 </span>
@@ -378,10 +406,14 @@ function StepCard({
 
       {/* Fields */}
       <div className="border-t px-3 py-2.5">
-        {action.type === "dispense" && <DispenseFields action={action} onUpdate={onUpdate} />}
-        {action.type === "stir" && <StirFields action={action} onUpdate={onUpdate} />}
+        {action.type === "dispense" && (
+          <DispenseFields action={action} onUpdate={onUpdate} />
+        )}
+        {action.type === "stir" && (
+          <StirFields action={action} onUpdate={onUpdate} />
+        )}
         {action.type === "cleanup" && (
-          <p className="text-muted-foreground font-mono text-[11px]">
+          <p className="font-mono text-[11px] text-muted-foreground">
             Remove current materials and replace with a fresh flask.
           </p>
         )}
@@ -396,7 +428,8 @@ const selectClass =
   "bg-background text-foreground border px-2 py-1 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-foreground/50";
 const inputClass =
   "bg-background text-foreground w-16 border px-2 py-1 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-foreground/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
-const fieldLabelClass = "text-muted-foreground font-mono text-[10px] uppercase tracking-wider";
+const fieldLabelClass =
+  "text-muted-foreground font-mono text-[10px] uppercase tracking-wider";
 
 // ── Dispense fields ────────────────────────────────────────────────────────
 
@@ -413,13 +446,13 @@ function DispenseFields({
         <span className={fieldLabelClass}>Reagent</span>
         <select
           className={selectClass}
-          value={action.reagent ?? ""}
           onChange={(e) =>
             onUpdate({
               ...action,
               reagent: (e.target.value || undefined) as Reagent | undefined,
             })
           }
+          value={action.reagent ?? ""}
         >
           <option value="">&mdash;</option>
           {reagents.map((r) => (
@@ -433,23 +466,25 @@ function DispenseFields({
       <div className="flex items-center gap-1.5">
         <span className={fieldLabelClass}>Amount</span>
         <input
-          type="number"
           className={inputClass}
-          placeholder="0"
           min={0}
-          step="any"
-          value={action.amount ?? ""}
           onChange={(e) =>
             onUpdate({
               ...action,
               amount: e.target.value ? Number(e.target.value) : undefined,
             })
           }
+          placeholder="0"
+          step="any"
+          type="number"
+          value={action.amount ?? ""}
         />
         <select
           className={selectClass}
+          onChange={(e) =>
+            onUpdate({ ...action, unit: e.target.value as VolumeUnit })
+          }
           value={action.unit ?? "mL"}
-          onChange={(e) => onUpdate({ ...action, unit: e.target.value as VolumeUnit })}
         >
           {volumeUnits.map((u) => (
             <option key={u} value={u}>
@@ -476,23 +511,25 @@ function StirFields({
       <div className="flex items-center gap-1.5">
         <span className={fieldLabelClass}>Duration</span>
         <input
-          type="number"
           className={inputClass}
-          placeholder="0"
           min={0}
-          step="any"
-          value={action.duration ?? ""}
           onChange={(e) =>
             onUpdate({
               ...action,
               duration: e.target.value ? Number(e.target.value) : undefined,
             })
           }
+          placeholder="0"
+          step="any"
+          type="number"
+          value={action.duration ?? ""}
         />
         <select
           className={selectClass}
+          onChange={(e) =>
+            onUpdate({ ...action, unit: e.target.value as TimeUnit })
+          }
           value={action.unit ?? "s"}
-          onChange={(e) => onUpdate({ ...action, unit: e.target.value as TimeUnit })}
         >
           {timeUnits.map((u) => (
             <option key={u} value={u}>
