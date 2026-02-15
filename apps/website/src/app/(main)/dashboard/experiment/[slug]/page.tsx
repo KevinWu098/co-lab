@@ -46,7 +46,7 @@ export default function ExperimentPage() {
   );
 
   const handleConfirmSetup = useCallback(
-    ({ procedure, reasoning, goals }: SetupResult) => {
+    ({ title, procedure, reasoning, goals }: SetupResult) => {
       if (!experiment) {
         return;
       }
@@ -57,6 +57,7 @@ export default function ExperimentPage() {
         createdAt: new Date().toISOString(),
       };
       updateExperiment(experiment.id, {
+        title,
         iterations: [firstIteration],
         procedure,
         reasoning,

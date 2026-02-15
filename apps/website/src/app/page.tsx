@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Background } from "@/components/co-lab/dashboard/background";
 import { FoldReveal } from "@/components/co-lab/fold-reveal";
+import { ImageLightbox } from "@/components/co-lab/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -49,36 +50,43 @@ export default function Home() {
 
           <div className="grid w-full grid-cols-3 gap-16">
             <div className="border-border flex min-h-[400px] flex-col border p-8">
-              <div className="border-border bg-muted/50 mb-auto flex aspect-video w-full items-center justify-center border">
-                <span className="text-muted-foreground/50 text-sm tracking-widest uppercase">
-                  Image placeholder
-                </span>
+              <div className="border-border mb-auto aspect-video w-full overflow-hidden border">
+                <ImageLightbox
+                  src="/design_two.png"
+                  alt="Design"
+                  className="h-full w-full object-cover object-left"
+                />
               </div>
               <h2 className="text-foreground mt-6 text-4xl font-bold tracking-tighter">Design</h2>
               <p className="text-muted-foreground mt-1 text-lg leading-none">
-                Craft experimental protocols with AI-guided precision and domain expertise.
+                Leverage agents to craft experimental protocols — from scratch or from existing
+                procedures.
               </p>
             </div>
             <div className="border-border flex min-h-[400px] flex-col border p-8">
-              <div className="border-border bg-muted/50 mb-auto flex aspect-video w-full items-center justify-center border">
-                <span className="text-muted-foreground/50 text-sm tracking-widest uppercase">
-                  Image placeholder
-                </span>
+              <div className="border-border mb-auto aspect-video w-full overflow-hidden border">
+                <ImageLightbox
+                  src="/execute.png"
+                  alt="Execute"
+                  className="h-full w-full object-cover object-left"
+                />
               </div>
               <h2 className="text-foreground mt-6 text-4xl font-bold tracking-tighter">Execute</h2>
               <p className="text-muted-foreground mt-1 text-lg leading-none">
-                Run experiments with automated hardware orchestration across your lab.
+                Run experiments with integrated hardware and observability across your lab.
               </p>
             </div>
             <div className="border-border flex min-h-[400px] flex-col border p-8">
-              <div className="border-border bg-muted/50 mb-auto flex aspect-video w-full items-center justify-center border">
-                <span className="text-muted-foreground/50 text-sm tracking-widest uppercase">
-                  Image placeholder
-                </span>
+              <div className="border-border mb-auto aspect-video w-full overflow-hidden border">
+                <ImageLightbox
+                  src="/iterate.png"
+                  alt="Iterate"
+                  className="h-full w-full object-cover object-left"
+                />
               </div>
               <h2 className="text-foreground mt-6 text-4xl font-bold tracking-tighter">Iterate</h2>
               <p className="text-muted-foreground mt-1 text-lg leading-none">
-                Analyze results and refine hypotheses in real time, closing the loop.
+                Analyze results and design iterative experiments in real time, closing the loop.
               </p>
             </div>
           </div>

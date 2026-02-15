@@ -83,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 tooltip="New experiment"
                 variant={"outline"}
               >
-                <PlusIcon className="size-4" />
+                <PlusIcon className="pointer-events-none size-4" />
                 <span>New experiment</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -93,7 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <ExperimentGroup active={false} experiments={inactive} label="Inactive" />
       </SidebarContent>
 
-      <SidebarFooter className="w-full border-t px-4">
+      <SidebarFooter className="w-full border-t px-4 group-data-[collapsible=icon]:p-2">
         <div className="flex items-center group-data-[collapsible=icon]:justify-center">
           <div className="flex flex-1 items-center gap-0 overflow-hidden">
             <Pulse

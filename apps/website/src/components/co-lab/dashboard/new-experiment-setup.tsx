@@ -34,11 +34,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import type {
-  Action,
-  AgentProcedureResult,
-  ProcedureStep,
-} from "@/lib/schemas/procedure";
+import type { Action, AgentProcedureResult, ProcedureStep } from "@/lib/schemas/procedure";
 import { cn } from "@/lib/utils";
 
 const setupSteps = ["choice", "import", "configure"] as const;
@@ -58,6 +54,7 @@ const HEADING_RE = /^(#{1,6})\s+(.+)/;
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export interface SetupResult {
+  title: string;
   procedure: ProcedureStep[];
   reasoning: string;
   goals: string[];
@@ -72,9 +69,7 @@ export function NewExperimentSetup({
 }) {
   const [step, setStep] = useQueryState(
     "setup",
-    parseAsStringLiteral(setupSteps)
-      .withDefault("choice")
-      .withOptions({ history: "push" })
+    parseAsStringLiteral(setupSteps).withDefault("choice").withOptions({ history: "push" }),
   );
 
   const [file, setFile] = useState<File | null>(null);
@@ -108,12 +103,8 @@ export function NewExperimentSetup({
     });
   }, [editorSteps]);
 
-  const fileUrl = useMemo(
-    () => (file ? URL.createObjectURL(file) : null),
-    [file]
-  );
-  const isPdf =
-    file?.type === "application/pdf" || PDF_EXT_RE.test(file?.name ?? "");
+  const fileUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  const isPdf = file?.type === "application/pdf" || PDF_EXT_RE.test(file?.name ?? "");
 
   useEffect(() => {
     return () => {
@@ -152,9 +143,7 @@ export function NewExperimentSetup({
       // Reasoning → trace (how the agent mapped the document)
       setAgentTrace(result.reasoning);
     } catch (err) {
-      setAgentError(
-        err instanceof Error ? err.message : "Failed to process file"
-      );
+      setAgentError(err instanceof Error ? err.message : "Failed to process file");
     } finally {
       setAgentLoading(false);
     }
@@ -175,7 +164,7 @@ export function NewExperimentSetup({
         handleFile(dropped);
       }
     },
-    [handleFile]
+    [handleFile],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -200,12 +189,7 @@ export function NewExperimentSetup({
     const end = textarea.selectionEnd;
     const text = textarea.value;
     const selected = text.substring(start, end);
-    const newText =
-      text.substring(0, start) +
-      prefix +
-      selected +
-      suffix +
-      text.substring(end);
+    const newText = text.substring(0, start) + prefix + selected + suffix + text.substring(end);
     setAgentInstructions(newText);
     requestAnimationFrame(() => {
       textarea.focus();
@@ -222,8 +206,7 @@ export function NewExperimentSetup({
     const start = textarea.selectionStart;
     const text = textarea.value;
     const lineStart = text.lastIndexOf("\n", start - 1) + 1;
-    const newText =
-      text.substring(0, lineStart) + prefix + text.substring(lineStart);
+    const newText = text.substring(0, lineStart) + prefix + text.substring(lineStart);
     setAgentInstructions(newText);
     requestAnimationFrame(() => {
       textarea.focus();
@@ -247,10 +230,7 @@ export function NewExperimentSetup({
     textarea.selectionStart = pos;
     textarea.selectionEnd = pos;
     const lineHeight = 16;
-    textarea.scrollTop = Math.max(
-      0,
-      line * lineHeight - textarea.clientHeight / 3
-    );
+    textarea.scrollTop = Math.max(0, line * lineHeight - textarea.clientHeight / 3);
   }, []);
 
   const headings = useMemo(() => {
@@ -263,9 +243,7 @@ export function NewExperimentSetup({
         }
         return null;
       })
-      .filter(
-        (h): h is { level: number; text: string; line: number } => h !== null
-      );
+      .filter((h): h is { level: number; text: string; line: number } => h !== null);
   }, [agentInstructions]);
 
   /* ── Choice / Import ── */
@@ -303,12 +281,12 @@ export function NewExperimentSetup({
         type="single"
       >
         <AccordionItem
-          className="flex flex-col border border-b-0 bg-background data-[state=open]:flex-1"
+          className="bg-background flex flex-col border border-b-0 data-[state=open]:flex-1"
           value="procedure"
         >
           <AccordionTrigger className="cursor-pointer px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
             <span className="flex items-center gap-2">
-              <ClipboardListIcon className="size-4 text-muted-foreground" />
+              <ClipboardListIcon className="text-muted-foreground size-4" />
               Experiment Procedure
             </span>
           </AccordionTrigger>
@@ -329,26 +307,24 @@ export function NewExperimentSetup({
 
         <AccordionItem
           className={cn(
-            "flex flex-col border bg-background data-[state=open]:flex-1",
+            "bg-background flex flex-col border data-[state=open]:flex-1",
             !agentTrace && "",
-            agentTrace && "border-b-0"
+            agentTrace && "border-b-0",
           )}
           value="agent"
         >
           <AccordionTrigger className="cursor-pointer px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
             <span className="flex items-center gap-2">
-              <BotIcon className="size-4 text-muted-foreground" />
+              <BotIcon className="text-muted-foreground size-4" />
               Agent Instructions
-              {agentLoading && (
-                <LoaderIcon className="size-3 animate-spin text-muted-foreground" />
-              )}
+              {agentLoading && <LoaderIcon className="text-muted-foreground size-3 animate-spin" />}
             </span>
           </AccordionTrigger>
           <AccordionContent className="p-0">
             <div className="flex h-0 flex-1 flex-col border-t">
               {agentLoading ? (
                 <div className="flex flex-1 items-center justify-center">
-                  <p className="font-mono text-muted-foreground text-sm">
+                  <p className="text-muted-foreground font-mono text-sm">
                     Waiting for agent&hellip;
                   </p>
                 </div>
@@ -511,14 +487,14 @@ export function NewExperimentSetup({
 
                     {/* Outline */}
                     <div className="w-md shrink-0 overflow-y-auto border-l p-3">
-                      <p className="mb-2 font-mono text-[11px] text-muted-foreground uppercase tracking-widest">
+                      <p className="text-muted-foreground mb-2 font-mono text-[11px] tracking-widest uppercase">
                         Outline
                       </p>
                       {headings.length > 0 ? (
                         <div className="space-y-0.5">
                           {headings.map((h, i) => (
                             <button
-                              className="block w-full cursor-pointer truncate text-left font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
+                              className="text-muted-foreground hover:text-foreground block w-full cursor-pointer truncate text-left font-mono text-xs transition-colors"
                               key={`${h.line}-${i}`}
                               onClick={() => scrollToLine(h.line)}
                               style={{ paddingLeft: `${(h.level - 1) * 12}px` }}
@@ -529,7 +505,7 @@ export function NewExperimentSetup({
                           ))}
                         </div>
                       ) : (
-                        <p className="font-mono text-muted-foreground/40 text-xs">
+                        <p className="text-muted-foreground/40 font-mono text-xs">
                           Add headings to see outline
                         </p>
                       )}
@@ -544,18 +520,18 @@ export function NewExperimentSetup({
         {/* Agent Trace — only shown when an import was processed */}
         {agentTrace && (
           <AccordionItem
-            className="flex flex-col border bg-background data-[state=open]:flex-1"
+            className="bg-background flex flex-col border data-[state=open]:flex-1"
             value="trace"
           >
             <AccordionTrigger className="cursor-pointer px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
               <span className="flex items-center gap-2">
-                <ScrollTextIcon className="size-4 text-muted-foreground" />
+                <ScrollTextIcon className="text-muted-foreground size-4" />
                 Agent Trace
               </span>
             </AccordionTrigger>
             <AccordionContent className="p-0">
               <div className="flex h-0 flex-1 flex-col overflow-y-auto border-t p-4">
-                <p className="whitespace-pre-wrap font-mono text-muted-foreground text-sm leading-relaxed">
+                <p className="text-muted-foreground font-mono text-sm leading-relaxed whitespace-pre-wrap">
                   {agentTrace}
                 </p>
               </div>
@@ -564,7 +540,7 @@ export function NewExperimentSetup({
         )}
       </Accordion>
 
-      <div className="flex items-center justify-end gap-2 border bg-background px-4 py-3">
+      <div className="bg-background flex items-center justify-end gap-2 border px-4 py-3">
         <Button
           onClick={() => {
             setFile(null);
@@ -585,6 +561,7 @@ export function NewExperimentSetup({
             }
             setStep(null);
             onConfirm?.({
+              title: agentResult?.title ?? "Untitled experiment",
               procedure: editorSteps,
               reasoning: agentTrace,
               goals: agentResult?.goals ?? [],
@@ -611,8 +588,8 @@ function CountdownTimer({ seconds }: { seconds: number }) {
   }, [remaining]);
 
   return (
-    <span className="text-primary font-mono text-2xl font-semibold tabular-nums">
-      {(remaining / 10).toFixed(1)}s
+    <span className="text-primary font-mono text-xl font-semibold tabular-nums">
+      Estimated {(remaining / 10).toFixed(1)}s
     </span>
   );
 }
@@ -637,12 +614,10 @@ function ProcedureContent({
   if (agentLoading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4">
-        <CountdownTimer seconds={5} />
+        <CountdownTimer seconds={7} />
         <div className="flex items-center gap-2">
           <LoaderIcon className="text-muted-foreground size-3.5 animate-spin" />
-          <p className="text-muted-foreground font-mono text-sm">
-            Processing procedure&hellip;
-          </p>
+          <p className="text-muted-foreground font-mono text-sm">Processing procedure&hellip;</p>
         </div>
         <p className="text-muted-foreground/60 text-xs">
           The agent is reading your document and mapping it to lab actions.
@@ -654,7 +629,7 @@ function ProcedureContent({
   if (agentError) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <p className="font-mono text-red-400 text-sm">{agentError}</p>
+        <p className="font-mono text-sm text-red-400">{agentError}</p>
         <Button onClick={onRetry} size="sm" variant="outline">
           Retry
         </Button>
@@ -706,22 +681,15 @@ function ChoiceImportView({
   return (
     <div className="flex h-full w-full gap-3">
       {/* Left: stacked choice panel */}
-      <div className={cn("flex h-fit w-full flex-col border bg-background")}>
+      <div className={cn("bg-background flex h-fit w-full flex-col border")}>
         <div className="border-b px-4 py-3">
-          <h2 className="font-medium font-mono text-sm">Set up experiment</h2>
-          <p className="mt-1 text-muted-foreground text-xs">
-            Choose a method to begin.
-          </p>
+          <h2 className="font-mono text-sm font-medium">Set up experiment</h2>
+          <p className="text-muted-foreground mt-1 text-xs">Choose a method to begin.</p>
         </div>
 
-        <div
-          className={cn(
-            "grid gap-3 p-4",
-            isImport ? "grid-cols-1" : "grid-cols-2"
-          )}
-        >
+        <div className={cn("grid gap-3 p-4", isImport ? "grid-cols-1" : "grid-cols-2")}>
           <button
-            className={`flex cursor-pointer flex-col items-center gap-2 border px-4 py-5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/50 ${
+            className={`focus-visible:ring-foreground/50 flex cursor-pointer flex-col items-center gap-2 border px-4 py-5 transition-colors focus-visible:ring-1 focus-visible:outline-none ${
               isImport
                 ? "border-foreground/50 bg-muted/40 hover:bg-muted/20"
                 : "bg-background hover:border-foreground/25 hover:bg-muted/30"
@@ -733,19 +701,19 @@ function ChoiceImportView({
               className={`size-4 ${isImport ? "text-foreground" : "text-muted-foreground"}`}
             />
             <span
-              className={`font-medium font-mono text-xs ${isImport ? "" : "text-muted-foreground"}`}
+              className={`font-mono text-xs font-medium ${isImport ? "" : "text-muted-foreground"}`}
             >
               From procedure
             </span>
           </button>
 
           <button
-            className="flex cursor-pointer flex-col items-center gap-2 border bg-background px-4 py-5 transition-colors hover:border-foreground/25 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/50"
+            className="bg-background hover:border-foreground/25 hover:bg-muted/30 focus-visible:ring-foreground/50 flex cursor-pointer flex-col items-center gap-2 border px-4 py-5 transition-colors focus-visible:ring-1 focus-visible:outline-none"
             onClick={() => onSetStep("configure")}
             type="button"
           >
-            <PenLineIcon className="size-4 text-muted-foreground" />
-            <span className="font-medium font-mono text-muted-foreground text-xs">
+            <PenLineIcon className="text-muted-foreground size-4" />
+            <span className="text-muted-foreground font-mono text-xs font-medium">
               Start manually
             </span>
           </button>
@@ -756,12 +724,12 @@ function ChoiceImportView({
       {isImport && (
         <motion.div
           animate={{ opacity: 1, x: 0 }}
-          className="flex w-2xl shrink-0 flex-col border bg-background"
+          className="bg-background flex w-2xl shrink-0 flex-col border"
           initial={{ opacity: 0, x: 80 }}
           transition={{ duration: 0.35, ease }}
         >
           <div className="flex items-center justify-between border-b px-4 py-3">
-            <h2 className="font-medium font-mono text-sm">Import procedure</h2>
+            <h2 className="font-mono text-sm font-medium">Import procedure</h2>
             <Button
               className="size-7"
               onClick={() => {
@@ -792,10 +760,8 @@ function ChoiceImportView({
             {file ? (
               <div className="flex flex-1 flex-col gap-3">
                 <div className="flex items-center gap-2 border px-3 py-2">
-                  <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="flex-1 truncate font-mono text-sm">
-                    {file.name}
-                  </span>
+                  <FileIcon className="text-muted-foreground size-4 shrink-0" />
+                  <span className="flex-1 truncate font-mono text-sm">{file.name}</span>
                   <Button
                     className="size-6 shrink-0"
                     onClick={onClearFile}
@@ -812,7 +778,7 @@ function ChoiceImportView({
                     title="PDF preview"
                   />
                 ) : (
-                  <div className="flex flex-1 items-center justify-center border border-dashed font-mono text-muted-foreground text-sm">
+                  <div className="text-muted-foreground flex flex-1 items-center justify-center border border-dashed font-mono text-sm">
                     Preview not available for this file type
                   </div>
                 )}
@@ -830,14 +796,12 @@ function ChoiceImportView({
                 onDrop={onDrop}
                 type="button"
               >
-                <UploadIcon className="size-6 text-muted-foreground" />
+                <UploadIcon className="text-muted-foreground size-6" />
                 <div className="space-y-1 text-center">
-                  <p className="font-mono text-muted-foreground text-sm">
+                  <p className="text-muted-foreground font-mono text-sm">
                     Upload your procedure here
                   </p>
-                  <p className="text-muted-foreground/60 text-xs">
-                    .pdf, .docx, .doc, .txt
-                  </p>
+                  <p className="text-muted-foreground/60 text-xs">.pdf, .docx, .doc, .txt</p>
                 </div>
               </button>
             )}

@@ -96,6 +96,18 @@ const goalsResultSchema = z.object({
     ),
 });
 
+// ── Title prompt & schema ────────────────────────────────────────────
+const TITLE_SYSTEM_PROMPT = `Read a laboratory procedure and generate a short, descriptive experiment title (3–6 words).
+Focus on the underlying chemical reaction or scientific process — use precise chemical terminology.
+Do NOT use colloquial names, brand names, consumer product names, or everyday household references.
+No quotes, no punctuation at the end.
+Respond with ONLY a JSON object — no markdown fences, no commentary.
+Schema: { "title": "..." }`;
+
+const titleResultSchema = z.object({
+  title: z.string().describe("A short, descriptive experiment title (3–6 words)."),
+});
+
 export async function POST(req: Request) {
   const t0 = performance.now();
 
@@ -135,7 +147,7 @@ export async function POST(req: Request) {
   const tLLM = performance.now();
   const userPrompt = `Read the following lab procedure and translate it into machine-executable actions for our robotic lab system.\n\n---\n\n${textContent}`;
 
-  const [stepsResult, reasoningResult, goalsResult] = await Promise.all([
+  const [stepsResult, reasoningResult, goalsResult, titleResult] = await Promise.all([
     generateObject({
       model: anthropic("claude-haiku-4-5"),
       system: STEPS_SYSTEM_PROMPT,
@@ -162,6 +174,15 @@ export async function POST(req: Request) {
       console.log(`[procedure] goals in ${(performance.now() - tLLM).toFixed(0)}ms`);
       return r;
     }),
+    generateObject({
+      model: anthropic("claude-haiku-4-5"),
+      system: TITLE_SYSTEM_PROMPT,
+      prompt: userPrompt,
+      schema: titleResultSchema,
+    }).then((r) => {
+      console.log(`[procedure] title in ${(performance.now() - tLLM).toFixed(0)}ms`);
+      return r;
+    }),
   ]);
 
   const tDone = performance.now();
@@ -171,5 +192,6 @@ export async function POST(req: Request) {
   const { steps } = stepsResult.object;
   const reasoning = reasoningResult.text;
   const { goals } = goalsResult.object;
-  return Response.json({ reasoning, goals, steps: toActions(steps) });
+  const { title } = titleResult.object;
+  return Response.json({ title, reasoning, goals, steps: toActions(steps) });
 }

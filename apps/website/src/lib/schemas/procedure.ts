@@ -228,6 +228,7 @@ export function toActions(flat: AgentAction[]): Action[] {
 }
 
 export type AgentProcedureResult = {
+  title: string;
   reasoning: string;
   goals: string[];
   steps: Action[];
