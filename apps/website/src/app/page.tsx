@@ -103,7 +103,11 @@ export default function Home() {
             <Link href="/dashboard">Try Demo</Link>
           </Button>
           <Button asChild variant="secondary" size="lg">
-            <Link href="https://devpost.com" target="_blank" rel="noopener noreferrer">
+            <Link
+              href="https://devpost.com/software/co-laboratory"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Devpost
             </Link>
           </Button>
