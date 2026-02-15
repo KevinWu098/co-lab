@@ -14,8 +14,6 @@ import websockets
 from .constants import (
     AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S,
     AUTOMATION_CLEANUP_SEQUENCE_DEG,
-    AUTOMATION_DISPENSE_BETWEEN_SENDS_S,
-    AUTOMATION_DISPENSE_MAX_OPEN_S_PER_CYCLE,
     AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S,
     AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S,
     AUTOMATION_STIR_MAX_DURATION_S,
@@ -520,30 +518,19 @@ async def run_dispense(dropper: int, amount_ml: float) -> dict[str, Any]:
             await sleep_non_negative(angular_delta / AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S)
     await sleep_non_negative(AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S)
 
-    remaining_ml = amount_ml
-    dispensed_amount_ml = 0.0
-    sends = 0
-    per_cycle_max_ml = max(0.001, valve_flow_ml_per_s * AUTOMATION_DISPENSE_MAX_OPEN_S_PER_CYCLE)
+    valve_open_s = amount_ml / valve_flow_ml_per_s
+    sends = 1
+    dispensed_amount_ml = amount_ml
 
-    while remaining_ml > 1e-6:
-        send_ml = min(remaining_ml, per_cycle_max_ml)
-        valve_open_s = send_ml / valve_flow_ml_per_s
-        sends += 1
-        rig_controller.set_channel_immediate(valve_channel, RIG_OPEN_ANGLE)
-        await broadcast_state()
-        await sleep_non_negative(valve_open_s)
+    rig_controller.set_channel_immediate(valve_channel, RIG_OPEN_ANGLE)
+    await broadcast_state()
+    await sleep_non_negative(valve_open_s)
 
-        rig_controller.set_channel_immediate(valve_channel, RIG_CLOSED_ANGLE)
-        if dropper == 3:
-            enable_volume_queries_for_seconds(10.0)
-        await broadcast_state()
-        await sleep_non_negative(AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S)
-
-        dispensed_amount_ml += send_ml
-        remaining_ml -= send_ml
-
-        if remaining_ml > 1e-6:
-            await sleep_non_negative(AUTOMATION_DISPENSE_BETWEEN_SENDS_S)
+    rig_controller.set_channel_immediate(valve_channel, RIG_CLOSED_ANGLE)
+    if dropper == 3:
+        enable_volume_queries_for_seconds(10.0)
+    await broadcast_state()
+    await sleep_non_negative(AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S)
 
     return {
         "dropper": dropper,

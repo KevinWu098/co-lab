@@ -46,12 +46,8 @@ AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S = 240.0
 AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S = 0.0
 # Wait after each valve close before any next action.
 AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S = 0.0
-# Optional pause between repeated dispense pulses for large requests.
-AUTOMATION_DISPENSE_BETWEEN_SENDS_S = 0.2
 # Per-valve flow calibration in milliliters per second (dropper 1..N).
 AUTOMATION_VALVE_FLOW_ML_PER_S = (50.0, 50.0, 50.0)
-# Safety cap for a single valve-open pulse duration.
-AUTOMATION_DISPENSE_MAX_OPEN_S_PER_CYCLE = 0.4
 AUTOMATION_STIR_MAX_DURATION_S = 3600.0
 
 RIG_SERVO_CHANNELS = 4
