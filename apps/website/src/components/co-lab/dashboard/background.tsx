@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 function Shader({ width, height }: { width: number; height: number }) {
   return (
     <ImageDithering
-      className="absolute inset-0 -z-10 h-svh w-svw opacity-50 brightness-125"
+      className="absolute inset-0 h-full w-full opacity-50 brightness-125"
       colorBack="#1a2550"
       colorFront="#ffffff"
       colorHighlight="#00d288"
@@ -35,15 +35,14 @@ export function Background() {
 
   return (
     <div className="absolute inset-0 -z-10 h-svh w-svw">
-      {/** biome-ignore lint/performance/noImgElement: trust me bro */}
+      {/* SSR placeholder — renders immediately, fades out once shader is ready */}
+      {/* biome-ignore lint/performance/noImgElement: server-rendered fallback */}
       <img
-        // src="/background-dither-placeholder.png"
+        src="/background-dither-placeholder.png"
         alt=""
-        className={`absolute inset-0 h-full w-full object-cover blur-xs transition-opacity duration-500 ${
-          size ? "opacity-0" : "opacity-100"
-        }`}
+        style={{ opacity: size ? 0 : 0.5 }}
+        className="absolute inset-0 h-full w-full object-cover brightness-125 transition-opacity duration-500"
         height={1117}
-        src="/foobar.png"
         width={1728}
       />
       {size && <Shader height={size.h} width={size.w} />}
