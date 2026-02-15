@@ -47,7 +47,7 @@ AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S = 1
 # Wait after each valve close before any next action.
 AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S = 3
 # Per-valve flow calibration in milliliters per second (dropper 1..N).
-AUTOMATION_VALVE_FLOW_ML_PER_S = (10.0, 10.0, 10.0)
+AUTOMATION_VALVE_FLOW_ML_PER_S = (8.0, 5.0, 8.0)
 AUTOMATION_STIR_MAX_DURATION_S = 3600.0
 
 RIG_SERVO_CHANNELS = 4
