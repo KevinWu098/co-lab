@@ -42,7 +42,7 @@ export function ContentPanels({ procedure }: { procedure?: ProcedureStep[] }) {
       type="single"
     >
       <AccordionItem
-        className="flex flex-col rounded-t-md border border-b-0 bg-background data-[state=open]:flex-1"
+        className="flex min-h-0 flex-col rounded-t-md border border-b-0 bg-background data-[state=open]:flex-1"
         value="procedure"
       >
         <AccordionTrigger className="px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
@@ -56,7 +56,7 @@ export function ContentPanels({ procedure }: { procedure?: ProcedureStep[] }) {
             )}
           </span>
         </AccordionTrigger>
-        <AccordionContent className="flex min-h-0 flex-1 flex-col p-0">
+        <AccordionContent className="p-0">
           <div className="flex min-h-0 flex-1 border-t">
             {steps.length === 0 ? (
               <div className="flex flex-1 items-center justify-center font-mono text-muted-foreground text-sm">
@@ -145,7 +145,7 @@ export function ContentPanels({ procedure }: { procedure?: ProcedureStep[] }) {
       </AccordionItem>
 
       <AccordionItem
-        className="flex flex-col border border-b-0 bg-background data-[state=open]:flex-1"
+        className="flex min-h-0 flex-col border border-b-0 bg-background data-[state=open]:flex-1"
         value="cameras"
       >
         <AccordionTrigger className="px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
@@ -154,13 +154,13 @@ export function ContentPanels({ procedure }: { procedure?: ProcedureStep[] }) {
             Cameras
           </span>
         </AccordionTrigger>
-        <AccordionContent className="flex min-h-0 flex-1 flex-col p-0">
+        <AccordionContent className="p-0">
           <CameraPanel />
         </AccordionContent>
       </AccordionItem>
 
       <AccordionItem
-        className="flex flex-col rounded-b-md border bg-background data-[state=open]:flex-1"
+        className="flex min-h-0 flex-col rounded-b-md border bg-background data-[state=open]:flex-1"
         value="graphs"
       >
         <AccordionTrigger className="px-4 py-3 hover:no-underline data-[state=open]:cursor-default">
@@ -169,7 +169,7 @@ export function ContentPanels({ procedure }: { procedure?: ProcedureStep[] }) {
             Graphs
           </span>
         </AccordionTrigger>
-        <AccordionContent className="flex min-h-0 flex-1 flex-col p-0">
+        <AccordionContent className="p-0">
           <GraphPanel />
         </AccordionContent>
       </AccordionItem>

@@ -1,8 +1,18 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { BeakerIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
+import {
+  BeakerIcon,
+  BookOpenIcon,
+  ChevronDownIcon,
+  ExternalLinkIcon,
+  GlobeIcon,
+  LoaderIcon,
+  Maximize2Icon,
+  Minimize2Icon,
+} from "lucide-react";
 import { useState } from "react";
+import type { ArxivPaper } from "@/lib/tools/arxiv";
 import {
   Conversation,
   ConversationContent,
@@ -18,6 +28,226 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Pulse } from "@/components/co-lab/pulse";
 import { Button } from "@/components/ui/button";
+
+/* ------------------------------------------------------------------ */
+/*  Tool result components                                            */
+/* ------------------------------------------------------------------ */
+
+function ToolLoading({ toolName, query }: { toolName: string; query?: string }) {
+  const label =
+    toolName === "searchArxiv"
+      ? "Searching arxiv"
+      : toolName === "web_search"
+        ? "Searching the web"
+        : `Running ${toolName}`;
+
+  return (
+    <div className="flex items-center gap-2 py-1.5">
+      <LoaderIcon className="text-muted-foreground size-3 animate-spin" />
+      <span className="text-muted-foreground font-mono text-[0.65rem]">
+        {label}
+        {query ? <> for &ldquo;{query}&rdquo;</> : null}&hellip;
+      </span>
+    </div>
+  );
+}
+
+function ArxivResults({ papers }: { papers: ArxivPaper[] }) {
+  const [open, setOpen] = useState(false);
+
+  if (!papers || papers.length === 0) return null;
+
+  return (
+    <div className="my-1.5">
+      <button
+        className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors"
+        onClick={() => setOpen(!open)}
+        type="button"
+      >
+        <BookOpenIcon className="size-3" />
+        <span className="font-mono text-[0.65rem]">
+          {papers.length} paper{papers.length !== 1 ? "s" : ""} found
+        </span>
+        <ChevronDownIcon
+          className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-2 space-y-2">
+          {papers.map((paper) => (
+            <a
+              className="hover:bg-muted/50 group block border p-2.5 transition-colors"
+              href={`https://arxiv.org/abs/${paper.arxivId}`}
+              key={paper.arxivId}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h4 className="font-mono text-xs font-medium leading-snug">{paper.title}</h4>
+                <ExternalLinkIcon className="text-muted-foreground size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+              </div>
+              <p className="text-muted-foreground mt-1 font-mono text-[0.6rem]">
+                {paper.authors.slice(0, 3).join(", ")}
+                {paper.authors.length > 3 ? ` +${paper.authors.length - 3}` : ""}
+              </p>
+              <p className="text-muted-foreground mt-1 line-clamp-2 text-[0.6rem] leading-relaxed">
+                {paper.abstract}
+              </p>
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="text-muted-foreground/60 font-mono text-[0.55rem]">
+                  {paper.arxivId}
+                </span>
+                {paper.categories.slice(0, 2).map((cat) => (
+                  <span
+                    className="bg-muted text-muted-foreground rounded px-1 py-0.5 font-mono text-[0.55rem]"
+                    key={cat}
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WebSearchSources({ output }: { output: unknown }) {
+  const [open, setOpen] = useState(false);
+
+  const sources: { title?: string; url?: string }[] = [];
+  if (output && typeof output === "object") {
+    const out = output as Record<string, unknown>;
+    if (Array.isArray(out.sources)) {
+      for (const s of out.sources) sources.push(s as { title?: string; url?: string });
+    } else if (Array.isArray(out.results)) {
+      for (const s of out.results) sources.push(s as { title?: string; url?: string });
+    }
+  }
+
+  return (
+    <div className="my-1.5">
+      <button
+        className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors"
+        onClick={() => setOpen(!open)}
+        type="button"
+      >
+        <GlobeIcon className="size-3" />
+        <span className="font-mono text-[0.65rem]">
+          {sources.length > 0
+            ? `${sources.length} source${sources.length !== 1 ? "s" : ""}`
+            : "Web search complete"}
+        </span>
+        {sources.length > 0 && (
+          <ChevronDownIcon
+            className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        )}
+      </button>
+
+      {open && sources.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {sources.map((source) => (
+            <a
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+              href={source.url}
+              key={source.url ?? source.title}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <ExternalLinkIcon className="size-2.5 shrink-0" />
+              <span className="truncate font-mono text-[0.6rem]">
+                {source.title || source.url}
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ToolError({ error }: { error?: string }) {
+  return (
+    <div className="text-destructive flex items-center gap-1.5 py-1.5">
+      <span className="font-mono text-[0.65rem]">Tool error: {error || "Unknown error"}</span>
+    </div>
+  );
+}
+
+function GenericToolResult({ toolName, output }: { toolName: string; output: unknown }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="my-1.5">
+      <button
+        className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1.5 transition-colors"
+        onClick={() => setOpen(!open)}
+        type="button"
+      >
+        <span className="font-mono text-[0.65rem]">{toolName} result</span>
+        <ChevronDownIcon
+          className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <pre className="bg-muted mt-1 max-h-40 overflow-auto rounded p-2 font-mono text-[0.6rem]">
+          {JSON.stringify(output, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Render a single tool part                                         */
+/* ------------------------------------------------------------------ */
+
+function ToolPart({
+  toolName,
+  state,
+  input,
+  output,
+  errorText,
+}: {
+  toolName: string;
+  state: string;
+  input: unknown;
+  output: unknown;
+  errorText?: string;
+}) {
+  switch (state) {
+    case "input-streaming":
+    case "input-available": {
+      const query =
+        input && typeof input === "object"
+          ? ((input as Record<string, unknown>).query as string | undefined)
+          : undefined;
+      return <ToolLoading query={query} toolName={toolName} />;
+    }
+    case "output-available": {
+      if (toolName === "searchArxiv") {
+        const data = output as { papers: ArxivPaper[] } | undefined;
+        return <ArxivResults papers={data?.papers ?? []} />;
+      }
+      if (toolName === "web_search") {
+        return <WebSearchSources output={output} />;
+      }
+      return <GenericToolResult output={output} toolName={toolName} />;
+    }
+    case "output-error":
+      return <ToolError error={errorText} />;
+    default:
+      return null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Chat                                                              */
+/* ------------------------------------------------------------------ */
 
 interface ChatProps {
   expanded?: boolean;
@@ -77,7 +307,8 @@ export function Chat({ expanded = false, onToggleExpand }: ChatProps) {
             <div className="space-y-1.5">
               <h3 className="font-mono text-sm font-medium">Co:Lab Assistant</h3>
               <p className="text-muted-foreground max-w-[30ch] text-xs leading-relaxed">
-                Ask about your experiment data, lab conditions, or analysis.
+                Ask about your experiment data, search arxiv for papers, or get real-time web
+                results.
               </p>
             </div>
           </ConversationEmptyState>
@@ -95,6 +326,21 @@ export function Chat({ expanded = false, onToggleExpand }: ChatProps) {
                         ) : (
                           <p key={key}>{part.text}</p>
                         );
+
+                      case "dynamic-tool":
+                        return (
+                          <ToolPart
+                            errorText={
+                              part.state === "output-error" ? part.errorText : undefined
+                            }
+                            input={part.input}
+                            key={key}
+                            output={"output" in part ? part.output : undefined}
+                            state={part.state}
+                            toolName={part.toolName}
+                          />
+                        );
+
                       default:
                         return null;
                     }

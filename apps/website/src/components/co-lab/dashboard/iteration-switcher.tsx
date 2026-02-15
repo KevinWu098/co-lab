@@ -1,6 +1,7 @@
 "use client";
 
 import { BotIcon, BotOffIcon, PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
 import type { Experiment } from "@/components/dashboard/sidebar/types";
@@ -26,6 +27,7 @@ export function IterationSwitcher({
 }: IterationSwitcherProps) {
   const iterations = experiment.iterations;
   const { updateExperiment } = useExperiments();
+  const router = useRouter();
   const [selected, setSelected] = useState(iterations[0]?.id ?? "");
 
   // Sync selection when iterations change (e.g. after setup confirm)
@@ -104,7 +106,14 @@ export function IterationSwitcher({
 
       <div className="flex">
         {iterations.length > 0 && (
-          <Button className="rounded-r-none" size="sm" variant="outline">
+          <Button
+            className="rounded-r-none"
+            onClick={() =>
+              router.push(`/dashboard/experiment/${experiment.id}/iterate`)
+            }
+            size="sm"
+            variant="outline"
+          >
             <PlusIcon />
             New iteration
           </Button>

@@ -11,7 +11,7 @@ import { EquipmentStatus } from "@/components/co-lab/dashboard/equipment-status"
 import { IterationSwitcher } from "@/components/co-lab/dashboard/iteration-switcher";
 import { NewExperimentSetup } from "@/components/co-lab/dashboard/new-experiment-setup";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
-import type { ProcedureStep } from "@/lib/schemas/procedure";
+import type { SetupResult } from "@/components/co-lab/dashboard/new-experiment-setup";
 import { cn } from "@/lib/utils";
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
@@ -25,7 +25,7 @@ export default function ExperimentPage() {
   const [chatVisible, setChatVisible] = useState(hasIterations);
 
   const handleConfirmSetup = useCallback(
-    (procedure: ProcedureStep[]) => {
+    ({ procedure, reasoning, goals }: SetupResult) => {
       if (!experiment) {
         return;
       }
@@ -39,6 +39,8 @@ export default function ExperimentPage() {
         iterations: [firstIteration],
         status: "idle" as const,
         procedure,
+        reasoning,
+        goals,
       });
       setChatVisible(true);
     },

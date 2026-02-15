@@ -57,12 +57,18 @@ const HEADING_RE = /^(#{1,6})\s+(.+)/;
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
+export interface SetupResult {
+  procedure: ProcedureStep[];
+  reasoning: string;
+  goals: string[];
+}
+
 export function NewExperimentSetup({
   onCancel,
   onConfirm,
 }: {
   onCancel?: () => void;
-  onConfirm?: (procedure: ProcedureStep[]) => void;
+  onConfirm?: (result: SetupResult) => void;
 }) {
   const [step, setStep] = useQueryState(
     "setup",
@@ -76,7 +82,7 @@ export function NewExperimentSetup({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Agent processing state
-  const [, setAgentResult] = useState<AgentProcedureResult | null>(null);
+  const [agentResult, setAgentResult] = useState<AgentProcedureResult | null>(null);
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
   const [initialSteps, setInitialSteps] = useState<Action[] | null>(null);
@@ -289,7 +295,7 @@ export function NewExperimentSetup({
               Experiment Procedure
             </span>
           </AccordionTrigger>
-          <AccordionContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+          <AccordionContent className="overflow-hidden p-0">
             <div className="flex h-0 flex-1 border-t">
               <ProcedureContent
                 agentError={agentError}
@@ -320,7 +326,7 @@ export function NewExperimentSetup({
               )}
             </span>
           </AccordionTrigger>
-          <AccordionContent className="flex min-h-0 flex-1 flex-col p-0">
+          <AccordionContent className="p-0">
             <div className="flex h-0 flex-1 flex-col border-t">
               {agentLoading ? (
                 <div className="flex flex-1 items-center justify-center">
@@ -529,7 +535,7 @@ export function NewExperimentSetup({
                 Agent Trace
               </span>
             </AccordionTrigger>
-            <AccordionContent className="flex min-h-0 flex-1 flex-col p-0">
+            <AccordionContent className="p-0">
               <div className="flex h-0 flex-1 flex-col overflow-y-auto border-t p-4">
                 <p className="whitespace-pre-wrap font-mono text-muted-foreground text-sm leading-relaxed">
                   {agentTrace}
@@ -556,7 +562,11 @@ export function NewExperimentSetup({
           disabled={agentLoading}
           onClick={() => {
             setStep(null);
-            onConfirm?.(editorSteps);
+            onConfirm?.({
+              procedure: editorSteps,
+              reasoning: agentTrace,
+              goals: agentResult?.goals ?? [],
+            });
           }}
           size="sm"
         >

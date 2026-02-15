@@ -347,7 +347,7 @@ function StepCard({
   return (
     <div className="group border-x border-t bg-background first:rounded-t last:rounded-b last:border-b">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 transition-colors group-hover:bg-muted/40">
+      <div className="flex items-center gap-2 bg-muted/60 px-3 py-2 transition-colors group-hover:bg-muted/80">
         <span className="w-5 text-right font-mono text-[10px] text-muted-foreground tabular-nums">
           {String(index + 1).padStart(2, "0")}
         </span>

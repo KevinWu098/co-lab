@@ -14,6 +14,8 @@ export interface Experiment {
   updatedAt: string;
   iterations: Iteration[];
   procedure?: import("@/lib/schemas/procedure").ProcedureStep[];
+  reasoning?: string;
+  goals?: string[];
 }
 
 export const statusLabel: Record<ExperimentStatus, string> = {

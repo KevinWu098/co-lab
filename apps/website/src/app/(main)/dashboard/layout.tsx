@@ -14,7 +14,7 @@ export default function Layout({
     <NuqsAdapter>
     <ExperimentsProvider>
     <ContentVisibilityProvider>
-      <div className="h-svh overflow-y-hidden overscroll-y-none">
+      <div className="flex h-svh flex-col overflow-hidden overscroll-y-none">
         <SidebarProvider
           style={
             {
@@ -25,7 +25,7 @@ export default function Layout({
           <SidebarOpacity>
             <AppSidebar />
           </SidebarOpacity>
-          <SidebarInset className="bg-transparent">
+          <SidebarInset className="min-h-0 overflow-hidden bg-transparent">
             <ContentWrapper>{children}</ContentWrapper>
           </SidebarInset>
         </SidebarProvider>

@@ -8,7 +8,7 @@ export function ContentWrapper({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`flex flex-1 flex-col ${visible ? "" : "transition-opacity duration-300 ease-in-out"}`}
+      className={`flex min-h-0 flex-1 flex-col ${visible ? "" : "transition-opacity duration-300 ease-in-out"}`}
       style={{
         opacity: visible ? 1 : 0,
         pointerEvents: visible ? "auto" : "none",
