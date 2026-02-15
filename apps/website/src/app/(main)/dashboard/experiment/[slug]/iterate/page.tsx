@@ -17,6 +17,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { useHardwareContext } from "@/lib/hardware/hardware-provider";
 import type { Action, AgentProcedureResult, ProcedureStep } from "@/lib/schemas/procedure";
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
@@ -25,6 +26,7 @@ export default function IteratePage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const { experiments, updateExperiment } = useExperiments();
+  const { setExecution } = useHardwareContext();
   const experiment = experiments.find((e) => e.id === slug);
 
   const [newSteps, setNewSteps] = useState<ProcedureStep[]>([]);
@@ -135,8 +137,16 @@ export default function IteratePage() {
       procedure: newSteps,
     });
 
+    // Reset execution so the button shows "Start Experiment" instead of "Re-run"
+    setExecution({
+      status: "idle",
+      currentStep: 0,
+      totalSteps: 0,
+      error: null,
+    });
+
     router.push(`/dashboard/experiment/${experiment.id}`);
-  }, [experiment, procedureValid, newSteps, updateExperiment, router]);
+  }, [experiment, procedureValid, newSteps, updateExperiment, setExecution, router]);
 
   if (!experiment) {
     return null;

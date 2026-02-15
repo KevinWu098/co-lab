@@ -16,7 +16,7 @@ export const experiments: Experiment[] = [
   {
     id: "exp-001",
     title: "Protein folding sim #12",
-    status: "running",
+    status: "waiting",
     updatedAt: "2m ago",
     procedure: proteinFoldingProcedure,
     reasoning:
@@ -68,7 +68,7 @@ export const experiments: Experiment[] = [
   {
     id: "exp-002",
     title: "CRISPR off-target analysis",
-    status: "running",
+    status: "waiting",
     updatedAt: "14m ago",
     iterations: [
       {
@@ -94,7 +94,7 @@ export const experiments: Experiment[] = [
   {
     id: "exp-003",
     title: "Catalyst screening — batch 7",
-    status: "waiting",
+    status: "idle",
     updatedAt: "1h ago",
     iterations: [
       {

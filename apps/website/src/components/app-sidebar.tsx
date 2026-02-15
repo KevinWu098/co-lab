@@ -46,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     addExperiment({
       id,
       title: "Untitled experiment",
-      status: "waiting",
+      status: "running",
       updatedAt: "just now",
       iterations: [],
     });
@@ -93,12 +93,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <ExperimentGroup active={false} experiments={inactive} label="Inactive" />
       </SidebarContent>
 
-      <SidebarFooter className="w-full border-t">
+      <SidebarFooter className="w-full border-t px-4">
         <div className="flex items-center group-data-[collapsible=icon]:justify-center">
           <div className="flex flex-1 items-center gap-0 overflow-hidden">
-            <Pulse className="mx-auto shrink-0" variant="running" />
-            <span className="truncate font-mono text-sm group-data-[collapsible=icon]:hidden">
-              All systems operational
+            <Pulse
+              className="mr-2 shrink-0 group-data-[collapsible=icon]:mx-auto"
+              variant="running"
+            />
+            <span className="mr-2 truncate font-mono text-sm group-data-[collapsible=icon]:hidden">
+              All systems nominal
             </span>
           </div>
           <div className="shrink-0 group-data-[collapsible=icon]:hidden">
