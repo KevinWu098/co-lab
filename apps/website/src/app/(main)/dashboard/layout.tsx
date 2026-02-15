@@ -5,6 +5,7 @@ import { ContentVisibilityProvider } from "@/components/dashboard/content-visibi
 import { ContentWrapper } from "@/components/dashboard/content-wrapper";
 import { ExperimentsProvider } from "@/components/dashboard/experiments-provider";
 import { SidebarOpacity } from "@/components/dashboard/sidebar-opacity";
+import { HardwareProvider } from "@/lib/hardware/hardware-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Layout({
@@ -13,6 +14,7 @@ export default function Layout({
   return (
     <NuqsAdapter>
     <ExperimentsProvider>
+    <HardwareProvider>
     <ContentVisibilityProvider>
       <div className="flex h-svh flex-col overflow-hidden overscroll-y-none">
         <SidebarProvider
@@ -32,6 +34,7 @@ export default function Layout({
         <Background />
       </div>
     </ContentVisibilityProvider>
+    </HardwareProvider>
     </ExperimentsProvider>
     </NuqsAdapter>
   );

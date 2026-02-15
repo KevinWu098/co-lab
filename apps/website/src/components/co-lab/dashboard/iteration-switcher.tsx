@@ -1,8 +1,14 @@
 "use client";
 
-import { BotIcon, BotOffIcon, PlusIcon, ZapIcon } from "lucide-react";
+import {
+  BotIcon,
+  BotOffIcon,
+  PlusIcon,
+  SquareIcon,
+  ZapIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
 import type { Experiment } from "@/components/dashboard/sidebar/types";
 import { Button } from "@/components/ui/button";
@@ -13,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useHardwareContext } from "@/lib/hardware/hardware-provider";
+import { runProcedure } from "@/lib/hardware/procedure-runner";
 
 interface IterationSwitcherProps {
   experiment: Experiment;
@@ -29,6 +37,32 @@ export function IterationSwitcher({
   const { updateExperiment } = useExperiments();
   const router = useRouter();
   const [selected, setSelected] = useState(iterations[0]?.id ?? "");
+
+  // Hardware integration
+  const { state: hwState, execution, sendCommand, waitForAck, setExecution, clearTelemetry } =
+    useHardwareContext();
+  const abortRef = useRef<AbortController | null>(null);
+
+  const isRunning = execution.status === "running";
+
+  const handleStartExperiment = useCallback(() => {
+    if (isRunning) {
+      // Abort the current run
+      abortRef.current?.abort();
+      abortRef.current = null;
+      return;
+    }
+
+    const steps = experiment.procedure;
+    if (!steps || steps.length === 0) return;
+
+    clearTelemetry();
+    abortRef.current = runProcedure(steps, {
+      sendCommand,
+      waitForAck,
+      setExecution,
+    });
+  }, [isRunning, experiment.procedure, sendCommand, waitForAck, setExecution, clearTelemetry]);
 
   // Sync selection when iterations change (e.g. after setup confirm)
   useEffect(() => {
@@ -108,15 +142,35 @@ export function IterationSwitcher({
         {iterations.length > 0 && (
           <>
             <Button
-              aria-label="Run experiment"
-              className="rounded-r-none border-green-600 bg-green-600 text-white hover:bg-green-700 hover:border-green-700"
-              onClick={() => {
-                // TODO: trigger hardware execution
-              }}
+              aria-label={isRunning ? "Stop experiment" : "Start experiment"}
+              className={
+                isRunning
+                  ? "rounded-r-none border-red-600 bg-red-600 text-white hover:bg-red-700 hover:border-red-700"
+                  : "rounded-r-none border-green-600 bg-green-600 text-white hover:bg-green-700 hover:border-green-700"
+              }
+              disabled={!hwState.connected && !isRunning}
+              onClick={handleStartExperiment}
               size="sm"
             >
-              <ZapIcon className="size-4" />
-              Start Experiment
+              {isRunning ? (
+                <>
+                  <SquareIcon className="size-3.5 fill-current" />
+                  Step {execution.currentStep + 1}/{execution.totalSteps}
+                </>
+              ) : (
+                <>
+                  {execution.status === "completed" ? (
+                    <ZapIcon className="size-4" />
+                  ) : (
+                    <ZapIcon className="size-4" />
+                  )}
+                  {execution.status === "completed"
+                    ? "Re-run"
+                    : execution.status === "error"
+                      ? "Retry"
+                      : "Start Experiment"}
+                </>
+              )}
             </Button>
             <Button
               className="rounded-none border-l-0"

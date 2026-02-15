@@ -4,14 +4,11 @@ import {
   BeakerIcon,
   FlaskConicalIcon,
   ThermometerIcon,
-  WeightIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -26,9 +23,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useHardwareContext } from "@/lib/hardware/hardware-provider";
+import type { TelemetryPoint } from "@/lib/hardware/types";
 import { cn } from "@/lib/utils";
 
-type GraphId = "temperature" | "weight" | "volume" | "reactants";
+// ── Graph definitions ───────────────────────────────────────────────────────
+
+type GraphId = "temperature" | "volume" | "reactants";
 
 interface GraphSource {
   id: GraphId;
@@ -39,7 +40,6 @@ interface GraphSource {
 
 const GRAPHS: GraphSource[] = [
   { id: "temperature", label: "Temperature", icon: ThermometerIcon },
-  { id: "weight", label: "Weight", icon: WeightIcon },
   { id: "volume", label: "Volume", icon: BeakerIcon },
   {
     id: "reactants",
@@ -49,73 +49,15 @@ const GRAPHS: GraphSource[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-
-const temperatureData = [
-  { time: "0 min", value: 22.1 },
-  { time: "5 min", value: 24.3 },
-  { time: "10 min", value: 28.7 },
-  { time: "15 min", value: 33.2 },
-  { time: "20 min", value: 36.8 },
-  { time: "25 min", value: 37.1 },
-  { time: "30 min", value: 36.9 },
-  { time: "35 min", value: 37.0 },
-  { time: "40 min", value: 37.2 },
-  { time: "45 min", value: 37.1 },
-];
+// ── Chart configs ───────────────────────────────────────────────────────────
 
 const temperatureConfig = {
   value: { label: "Temperature (°C)", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
-const weightData = [
-  { time: "0 min", value: 150.0 },
-  { time: "5 min", value: 149.8 },
-  { time: "10 min", value: 149.2 },
-  { time: "15 min", value: 148.1 },
-  { time: "20 min", value: 146.5 },
-  { time: "25 min", value: 144.8 },
-  { time: "30 min", value: 143.2 },
-  { time: "35 min", value: 142.1 },
-  { time: "40 min", value: 141.5 },
-  { time: "45 min", value: 141.2 },
-];
-
-const weightConfig = {
-  value: { label: "Weight (g)", color: "var(--chart-2)" },
-} satisfies ChartConfig;
-
-const volumeData = [
-  { time: "0 min", value: 0 },
-  { time: "5 min", value: 12 },
-  { time: "10 min", value: 28 },
-  { time: "15 min", value: 45 },
-  { time: "20 min", value: 67 },
-  { time: "25 min", value: 82 },
-  { time: "30 min", value: 91 },
-  { time: "35 min", value: 96 },
-  { time: "40 min", value: 98 },
-  { time: "45 min", value: 100 },
-];
-
 const volumeConfig = {
   value: { label: "Volume (mL)", color: "var(--chart-4)" },
 } satisfies ChartConfig;
-
-const reactantsData = [
-  { time: "0 min", h2o2: 30, catalyst: 5.0, soap: 10.0 },
-  { time: "5 min", h2o2: 27, catalyst: 4.9, soap: 9.8 },
-  { time: "10 min", h2o2: 22, catalyst: 4.7, soap: 9.5 },
-  { time: "15 min", h2o2: 16, catalyst: 4.5, soap: 9.1 },
-  { time: "20 min", h2o2: 11, catalyst: 4.2, soap: 8.6 },
-  { time: "25 min", h2o2: 7, catalyst: 3.9, soap: 8.0 },
-  { time: "30 min", h2o2: 4, catalyst: 3.6, soap: 7.4 },
-  { time: "35 min", h2o2: 2, catalyst: 3.3, soap: 6.8 },
-  { time: "40 min", h2o2: 1, catalyst: 3.0, soap: 6.2 },
-  { time: "45 min", h2o2: 0.5, catalyst: 2.8, soap: 5.8 },
-];
 
 const reactantsConfig = {
   h2o2: { label: "H₂O₂ (mL)", color: "var(--chart-1)" },
@@ -123,23 +65,46 @@ const reactantsConfig = {
   soap: { label: "Dish Soap (mL)", color: "var(--chart-5)" },
 } satisfies ChartConfig;
 
-// ---------------------------------------------------------------------------
-// Individual chart components
-// ---------------------------------------------------------------------------
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
+function round1(v: number | null): number | null {
+  return v != null ? Math.round(v * 10) / 10 : null;
+}
+
+function toChartData(telemetry: TelemetryPoint[]) {
+  return telemetry.map((p) => ({
+    time: formatTime(p.elapsed),
+    tempC: round1(p.tempC),
+    totalVolumeMl: Math.round(p.totalVolumeMl * 10) / 10,
+    h2o2: Math.round(p.dispensed.h2o2 * 10) / 10,
+    catalyst: Math.round(p.dispensed.catalyst * 10) / 10,
+    soap: Math.round(p.dispensed.soap * 10) / 10,
+  }));
+}
+
+// ── Individual chart components ─────────────────────────────────────────────
 
 interface ChartProps {
   compact?: boolean;
   animate?: boolean;
+  data: ReturnType<typeof toChartData>;
 }
 
-function TemperatureChart({ compact, animate = true }: ChartProps) {
+function TemperatureChart({ compact, animate = true, data }: ChartProps) {
   return (
     <ChartContainer
       config={temperatureConfig}
       className="aspect-auto! h-full w-full"
     >
       <LineChart
-        data={temperatureData}
+        data={data}
         margin={{ top: 12, right: 12, bottom: 0, left: compact ? -20 : 0 }}
       >
         <CartesianGrid vertical={false} />
@@ -156,34 +121,37 @@ function TemperatureChart({ compact, animate = true }: ChartProps) {
             axisLine={false}
             tickMargin={8}
             domain={["dataMin - 2", "dataMax + 2"]}
+            tickFormatter={(v: number) => `${v.toFixed(1)}`}
           />
         )}
         <ChartTooltip content={<ChartTooltipContent />} />
         <Line
           type="monotone"
-          dataKey="value"
+          dataKey="tempC"
+          name="Temperature (°C)"
           stroke="var(--color-value)"
           strokeWidth={2}
-          dot={!compact}
+          dot={!compact && data.length < 30}
           isAnimationActive={animate}
+          connectNulls
         />
       </LineChart>
     </ChartContainer>
   );
 }
 
-function WeightChart({ compact, animate = true }: ChartProps) {
+function VolumeChart({ compact, animate = true, data }: ChartProps) {
   return (
     <ChartContainer
-      config={weightConfig}
+      config={volumeConfig}
       className="aspect-auto! h-full w-full"
     >
       <AreaChart
-        data={weightData}
+        data={data}
         margin={{ top: 12, right: 12, bottom: 0, left: compact ? -20 : 0 }}
       >
         <defs>
-          <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="volumeFill" x1="0" y1="0" x2="0" y2="1">
             <stop
               offset="5%"
               stopColor="var(--color-value)"
@@ -205,21 +173,17 @@ function WeightChart({ compact, animate = true }: ChartProps) {
           fontSize={compact ? 10 : 12}
         />
         {!compact && (
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            domain={["dataMin - 2", "dataMax + 2"]}
-          />
+          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
         )}
         <ChartTooltip content={<ChartTooltipContent />} />
         <Area
-          type="monotone"
-          dataKey="value"
+          type="stepAfter"
+          dataKey="totalVolumeMl"
+          name="Volume (mL)"
           stroke="var(--color-value)"
           strokeWidth={2}
-          fill="url(#weightFill)"
-          dot={!compact}
+          fill="url(#volumeFill)"
+          dot={false}
           isAnimationActive={animate}
         />
       </AreaChart>
@@ -227,47 +191,14 @@ function WeightChart({ compact, animate = true }: ChartProps) {
   );
 }
 
-function VolumeChart({ compact, animate = true }: ChartProps) {
-  return (
-    <ChartContainer
-      config={volumeConfig}
-      className="aspect-auto! h-full w-full"
-    >
-      <BarChart
-        data={volumeData}
-        margin={{ top: 12, right: 12, bottom: 0, left: compact ? -20 : 0 }}
-      >
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="time"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          fontSize={compact ? 10 : 12}
-        />
-        {!compact && (
-          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-        )}
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar
-          dataKey="value"
-          fill="var(--color-value)"
-          radius={[4, 4, 0, 0]}
-          isAnimationActive={animate}
-        />
-      </BarChart>
-    </ChartContainer>
-  );
-}
-
-function ReactantsChart({ compact, animate = true }: ChartProps) {
+function ReactantsChart({ compact, animate = true, data }: ChartProps) {
   return (
     <ChartContainer
       config={reactantsConfig}
       className="aspect-auto! h-full w-full"
     >
       <LineChart
-        data={reactantsData}
+        data={data}
         margin={{ top: 12, right: 12, bottom: 0, left: compact ? -20 : 0 }}
       >
         <CartesianGrid vertical={false} />
@@ -284,27 +215,27 @@ function ReactantsChart({ compact, animate = true }: ChartProps) {
         <ChartTooltip content={<ChartTooltipContent />} />
         {!compact && <ChartLegend content={<ChartLegendContent />} />}
         <Line
-          type="monotone"
+          type="stepAfter"
           dataKey="h2o2"
           stroke="var(--color-h2o2)"
           strokeWidth={2}
-          dot={!compact}
+          dot={false}
           isAnimationActive={animate}
         />
         <Line
-          type="monotone"
+          type="stepAfter"
           dataKey="catalyst"
           stroke="var(--color-catalyst)"
           strokeWidth={2}
-          dot={!compact}
+          dot={false}
           isAnimationActive={animate}
         />
         <Line
-          type="monotone"
+          type="stepAfter"
           dataKey="soap"
           stroke="var(--color-soap)"
           strokeWidth={2}
-          dot={!compact}
+          dot={false}
           isAnimationActive={animate}
         />
       </LineChart>
@@ -312,22 +243,18 @@ function ReactantsChart({ compact, animate = true }: ChartProps) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Chart lookup
-// ---------------------------------------------------------------------------
+// ── Chart lookup ────────────────────────────────────────────────────────────
 
 const CHART_COMPONENTS: Record<GraphId, React.ComponentType<ChartProps>> = {
   temperature: TemperatureChart,
-  weight: WeightChart,
   volume: VolumeChart,
   reactants: ReactantsChart,
 };
 
-// ---------------------------------------------------------------------------
-// GraphPanel
-// ---------------------------------------------------------------------------
+// ── GraphPanel ──────────────────────────────────────────────────────────────
 
 export function GraphPanel() {
+  const { telemetry, state } = useHardwareContext();
   const initialMount = useRef(true);
 
   useEffect(() => {
@@ -350,13 +277,38 @@ export function GraphPanel() {
     });
   }
 
+  // Downsample for rendering: keep at most ~120 points to keep the chart snappy.
+  const chartData = useMemo(() => {
+    const raw = toChartData(telemetry);
+    if (raw.length <= 120) return raw;
+    const step = Math.ceil(raw.length / 120);
+    return raw.filter((_, i) => i % step === 0 || i === raw.length - 1);
+  }, [telemetry]);
+
+  const hasData = chartData.length > 0;
   const active = GRAPHS.filter((g) => selected.has(g.id));
+
+  // Live stat for the sidebar
+  const liveTempC = state.thermal.maxTempC;
 
   return (
     <div className="flex min-h-0 flex-1 border-t">
       {/* Chart area */}
       <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
-        {active.length === 0 ? (
+        {!hasData ? (
+          <div className="text-muted-foreground flex h-full w-full flex-col items-center justify-center gap-1 font-mono text-sm">
+            <span>
+              {state.connected
+                ? "Recording telemetry..."
+                : "Waiting for hardware connection"}
+            </span>
+            {state.connected && liveTempC != null && (
+              <span className="text-xs">
+                Current: {liveTempC.toFixed(1)}°C
+              </span>
+            )}
+          </div>
+        ) : active.length === 0 ? (
           <div className="text-muted-foreground flex h-full w-full items-center justify-center font-mono text-sm">
             No graph selected
           </div>
@@ -364,7 +316,12 @@ export function GraphPanel() {
           <div className="absolute inset-0 p-4">
             {(() => {
               const Chart = CHART_COMPONENTS[active[0].id];
-              return <Chart animate={initialMount.current} />;
+              return (
+                <Chart
+                  data={chartData}
+                  animate={initialMount.current}
+                />
+              );
             })()}
           </div>
         ) : (
@@ -372,8 +329,7 @@ export function GraphPanel() {
             className={cn(
               "absolute inset-0 grid gap-3 p-4",
               active.length === 2 && "grid-cols-2 grid-rows-1",
-              active.length === 3 && "grid-cols-2 grid-rows-2",
-              active.length >= 4 && "grid-cols-2 grid-rows-2",
+              active.length >= 3 && "grid-cols-2 grid-rows-2",
             )}
           >
             {active.map((g) => {
@@ -387,7 +343,11 @@ export function GraphPanel() {
                     {g.label}
                   </span>
                   <div className="absolute inset-0 p-2 pt-6">
-                    <Chart compact animate={initialMount.current} />
+                    <Chart
+                      compact
+                      data={chartData}
+                      animate={initialMount.current}
+                    />
                   </div>
                 </div>
               );
@@ -429,6 +389,27 @@ export function GraphPanel() {
             </button>
           );
         })}
+
+        {/* Live readout */}
+        {state.connected && (
+          <div className="mt-3 border-t pt-3">
+            <span className="text-muted-foreground px-2 font-mono text-xs uppercase tracking-wider">
+              Live
+            </span>
+            <div className="mt-1 space-y-1 px-2 font-mono text-xs">
+              {liveTempC != null && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Temp</span>
+                  <span>{liveTempC.toFixed(1)}°C</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Samples</span>
+                <span>{telemetry.length}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

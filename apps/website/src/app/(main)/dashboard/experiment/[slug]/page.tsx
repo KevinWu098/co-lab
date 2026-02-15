@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { nanoid } from "nanoid";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Chat } from "@/components/co-lab/dashboard/chat";
 import { ContentPanels } from "@/components/co-lab/dashboard/content-panels";
 import { DataCard } from "@/components/co-lab/dashboard/data-card";
@@ -12,6 +12,7 @@ import { IterationSwitcher } from "@/components/co-lab/dashboard/iteration-switc
 import { NewExperimentSetup } from "@/components/co-lab/dashboard/new-experiment-setup";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
 import type { SetupResult } from "@/components/co-lab/dashboard/new-experiment-setup";
+import { useHardwareContext } from "@/lib/hardware/hardware-provider";
 import { cn } from "@/lib/utils";
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
@@ -23,6 +24,21 @@ export default function ExperimentPage() {
   const [chatExpanded, setChatExpanded] = useState(false);
   const hasIterations = experiment ? experiment.iterations.length > 0 : false;
   const [chatVisible, setChatVisible] = useState(hasIterations);
+
+  // Live telemetry from hardware
+  const { telemetry, state: hwState } = useHardwareContext();
+  const tempValues = useMemo(
+    () =>
+      telemetry
+        .map((p) => p.tempC)
+        .filter((v): v is number => v != null)
+        .map((v) => Math.round(v * 10) / 10),
+    [telemetry],
+  );
+  const volumeValues = useMemo(
+    () => telemetry.map((p) => Math.round(p.totalVolumeMl * 10) / 10),
+    [telemetry],
+  );
 
   const handleConfirmSetup = useCallback(
     ({ procedure, reasoning, goals }: SetupResult) => {
@@ -87,18 +103,22 @@ export default function ExperimentPage() {
                 <DataCard
                   title="Temperature"
                   unit="°C"
-                  values={[36.8, 36.9, 37.0, 37.1, 36.9, 37.0, 37.1, 37.2]}
+                  values={tempValues}
                 />
                 <DataCard
-                  title="Pressure"
-                  unit="atm"
-                  values={[1.015, 1.014, 1.014, 1.013, 1.012, 1.013]}
+                  title="Dispensed Volume"
+                  unit="mL"
+                  values={volumeValues}
                 />
                 <DataCard
                   last
-                  title="pH Level"
-                  unit="pH"
-                  values={[7.2, 7.3, 7.3, 7.4, 7.4]}
+                  title="Thermal FPS"
+                  unit="fps"
+                  values={
+                    hwState.thermal.fps != null
+                      ? [Math.round(hwState.thermal.fps)]
+                      : []
+                  }
                 />
               </motion.div>
 
