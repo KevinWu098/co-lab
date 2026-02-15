@@ -187,16 +187,18 @@ def parse_automation_stir_duration_s(raw: Any) -> float:
 
 
 def parse_volume_from_text(raw_text: str) -> float | None:
-    match = re.search(r"-?\d+(?:\.\d+)?", raw_text)
-    if not match:
+    matches = re.findall(r"-?\d+(?:\.\d+)?", raw_text)
+    if not matches:
         return None
-    try:
-        volume_ml = float(match.group(0))
-    except ValueError:
-        return None
-    if not math.isfinite(volume_ml) or volume_ml < 0:
-        return None
-    return volume_ml
+    for token in matches:
+        try:
+            volume_ml = float(token)
+        except ValueError:
+            continue
+        if not math.isfinite(volume_ml) or volume_ml < 0:
+            continue
+        return volume_ml
+    return None
 
 
 def volume_payload() -> dict[str, Any]:
@@ -330,7 +332,7 @@ def request_volume_estimate_sync(jpeg: bytes) -> tuple[float | None, str | None]
     image_base64 = base64.b64encode(jpeg).decode("ascii")
     response = anthropic_client.messages.create(
         model=anthropic_model,
-        max_tokens=10,
+        max_tokens=64,
         temperature=0,
         messages=[
             {
@@ -339,11 +341,12 @@ def request_volume_estimate_sync(jpeg: bytes) -> tuple[float | None, str | None]
                     {
                         "type": "text",
                         "text": (
-                            "Give me the volume of liquid and/or foam in the flask in "
-                            "milliliters as just the number. Use the graduation lines for "
-                            "reference. The height of substance may be higher than the highest "
-                            "marking. Infer the volume if between markings. The angle of the "
-                            "image may be skewed."
+                            "Estimate the liquid and/or foam volume in the flask in milliliters. "
+                            "Return ONLY a single numeric value (example: 37.5). "
+                            "Do not include units or any extra words. "
+                            "Use graduation lines as reference, interpolate between markings, "
+                            "and infer even if the level is above highest marking or image is skewed."
+                            "If no flask is present, return 0."
                         ),
                     },
                     {
@@ -359,11 +362,15 @@ def request_volume_estimate_sync(jpeg: bytes) -> tuple[float | None, str | None]
         ],
     )
 
-    raw_text = ""
+    text_fragments: list[str] = []
     content = getattr(response, "content", None)
-    if isinstance(content, list) and content:
-        first_entry = content[0]
-        raw_text = str(getattr(first_entry, "text", "")).strip()
+    if isinstance(content, list):
+        for entry in content:
+            text_value = str(getattr(entry, "text", "")).strip()
+            if text_value:
+                text_fragments.append(text_value)
+
+    raw_text = " ".join(text_fragments).strip()
     volume_ml = parse_volume_from_text(raw_text)
     return volume_ml, raw_text
 
