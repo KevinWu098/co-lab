@@ -41,11 +41,11 @@ AUTOMATION_CLEANUP_SEQUENCE_DEG = (
 
 # Dispense process tuning (user-editable).
 # Base-rotation completion is estimated from angular delta / deg-per-second.
-AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S = 120.0
+AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S = 240.0
 # Wait after base motion completes before opening valve.
-AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S = 0.25
+AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S = 0.0
 # Wait after each valve close before any next action.
-AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S = 0.25
+AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S = 0.0
 # Optional pause between repeated dispense pulses for large requests.
 AUTOMATION_DISPENSE_BETWEEN_SENDS_S = 0.2
 # Per-valve flow calibration in milliliters per second (dropper 1..N).
