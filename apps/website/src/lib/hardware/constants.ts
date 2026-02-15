@@ -2,8 +2,8 @@ import type { Reagent } from "@/lib/schemas/procedure";
 
 // ── Connection ──────────────────────────────────────────────────────────────
 
-export const DEFAULT_WS_URL = "ws://10.19.178.246:8765";
-export const DEFAULT_HTTP_PORT = 8081;
+export const DEFAULT_WS_URL = process.env.NEXT_PUBLIC_PI_WS_URL;
+export const DEFAULT_HTTP_PORT = Number(process.env.NEXT_PUBLIC_PI_HTTP_PORT);
 
 // ── MJPEG stream paths ──────────────────────────────────────────────────────
 
