@@ -13,7 +13,7 @@
   },
   "lint-staged": {
     "!(pnpm-lock.yaml|apps/website/**)": [
-      "prettier --write"
+      "prettier --write --ignore-unknown"
     ]
   },
   "prettier": "@packages/prettier-config",

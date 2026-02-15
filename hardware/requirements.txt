@@ -9,3 +9,5 @@ lgpio
 aiohttp
 pillow
 opencv-python-headless
+anthropic
+python-dotenv
