@@ -34,7 +34,7 @@ export function FoldReveal() {
   }, []);
 
   return (
-    <div className="fixed right-0 bottom-0 left-0 z-0 h-[100vh] w-svw overflow-hidden opacity-50 brightness-125">
+    <div className="fixed right-0 bottom-0 left-0 z-0 h-[600px] w-svw overflow-hidden opacity-50 brightness-125">
       {size && <FoldShader height={600} width={size.w} />}
     </div>
   );
