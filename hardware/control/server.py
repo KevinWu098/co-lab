@@ -12,11 +12,14 @@ from typing import Any
 import websockets
 
 from .constants import (
+    AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S,
     AUTOMATION_CLEANUP_SEQUENCE_DEG,
     AUTOMATION_DISPENSE_BETWEEN_SENDS_S,
-    AUTOMATION_DISPENSE_ML_PER_SEND,
-    AUTOMATION_DISPENSE_VALVE_OPEN_S,
+    AUTOMATION_DISPENSE_MAX_OPEN_S_PER_CYCLE,
+    AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S,
+    AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S,
     AUTOMATION_STIR_MAX_DURATION_S,
+    AUTOMATION_VALVE_FLOW_ML_PER_S,
     HOST,
     PORT,
     RIG_BASE_ROTATION_CHANNEL,
@@ -153,7 +156,11 @@ def parse_dropper_number(raw: Any) -> int:
     if isinstance(raw, bool) or not isinstance(raw, int):
         raise ValueError("invalid_dropper")
 
-    max_dropper = min(len(RIG_BASE_ROTATION_POSITIONS), len(RIG_DIAGNOSTIC_SERVO_CHANNELS))
+    max_dropper = min(
+        len(RIG_BASE_ROTATION_POSITIONS),
+        len(RIG_DIAGNOSTIC_SERVO_CHANNELS),
+        len(AUTOMATION_VALVE_FLOW_ML_PER_S),
+    )
     if raw < 1 or raw > max_dropper:
         raise ValueError("invalid_dropper")
     return raw
@@ -497,29 +504,45 @@ async def run_dispense(dropper: int, amount_ml: float) -> dict[str, Any]:
     dropper_index = dropper - 1
     target_base = float(RIG_BASE_ROTATION_POSITIONS[dropper_index])
     valve_channel = int(RIG_DIAGNOSTIC_SERVO_CHANNELS[dropper_index])
-    sends = max(1, math.ceil(amount_ml / AUTOMATION_DISPENSE_ML_PER_SEND))
-    dispensed_amount_ml = sends * AUTOMATION_DISPENSE_ML_PER_SEND
+    valve_flow_ml_per_s = float(AUTOMATION_VALVE_FLOW_ML_PER_S[dropper_index])
+    if valve_flow_ml_per_s <= 0:
+        raise RuntimeError("invalid_valve_flow_rate")
 
     rig_controller.close_non_base_servos()
     await broadcast_state()
 
     current_base = float(rig_controller.servo_angles[RIG_BASE_ROTATION_CHANNEL])
     if round(current_base) != round(target_base):
+        angular_delta = abs(target_base - current_base)
         await run_rig_base_move(target_base)
         await broadcast_state()
-        await sleep_non_negative(RIG_DIAGNOSTIC_BASE_TO_VALVE_DELAY_S)
+        if AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S > 0:
+            await sleep_non_negative(angular_delta / AUTOMATION_BASE_ROTATION_SPEED_DEG_PER_S)
+    await sleep_non_negative(AUTOMATION_DISPENSE_PRE_OPEN_WAIT_S)
 
-    for send_index in range(sends):
+    remaining_ml = amount_ml
+    dispensed_amount_ml = 0.0
+    sends = 0
+    per_cycle_max_ml = max(0.001, valve_flow_ml_per_s * AUTOMATION_DISPENSE_MAX_OPEN_S_PER_CYCLE)
+
+    while remaining_ml > 1e-6:
+        send_ml = min(remaining_ml, per_cycle_max_ml)
+        valve_open_s = send_ml / valve_flow_ml_per_s
+        sends += 1
         rig_controller.set_channel_immediate(valve_channel, RIG_OPEN_ANGLE)
         await broadcast_state()
-        await sleep_non_negative(AUTOMATION_DISPENSE_VALVE_OPEN_S)
+        await sleep_non_negative(valve_open_s)
 
         rig_controller.set_channel_immediate(valve_channel, RIG_CLOSED_ANGLE)
         if dropper == 3:
             enable_volume_queries_for_seconds(10.0)
         await broadcast_state()
+        await sleep_non_negative(AUTOMATION_DISPENSE_POST_CLOSE_WAIT_S)
 
-        if send_index < sends - 1:
+        dispensed_amount_ml += send_ml
+        remaining_ml -= send_ml
+
+        if remaining_ml > 1e-6:
             await sleep_non_negative(AUTOMATION_DISPENSE_BETWEEN_SENDS_S)
 
     return {
