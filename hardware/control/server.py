@@ -794,10 +794,6 @@ async def handle_automation_dispense(websocket: Any, data: dict[str, Any]) -> No
     global rig_base_servo_task
     global rig_diagnostic_task
 
-    if automation_lock.locked():
-        await send_error(websocket, "automation_busy")
-        return
-
     try:
         rig_controller._ensure_available()
         dropper = parse_dropper_number(data.get("dropper"))
@@ -817,9 +813,25 @@ async def handle_automation_dispense(websocket: Any, data: dict[str, Any]) -> No
         rig_base_servo_task.cancel()
     rig_base_servo_task = None
 
+    queued_at = time.monotonic()
     try:
         async with automation_lock:
+            queued_wait_s = time.monotonic() - queued_at
+            started_at = time.monotonic()
+            logging.info(
+                "automation dispense start dropper=%s amount_ml=%.3f queued_wait_s=%.3f",
+                dropper,
+                amount_ml,
+                queued_wait_s,
+            )
             result = await run_dispense(dropper, amount_ml)
+            run_s = time.monotonic() - started_at
+            logging.info(
+                "automation dispense done dropper=%s amount_ml=%.3f run_s=%.3f",
+                dropper,
+                amount_ml,
+                run_s,
+            )
     except Exception as exc:
         logging.exception("automation dispense failed dropper=%s amount_ml=%s", dropper, amount_ml)
         await send_error(websocket, f"dispense_failed:{exc}")
@@ -858,8 +870,23 @@ async def handle_automation_stir(websocket: Any, data: dict[str, Any]) -> None:
         rig_stirrer_task.cancel()
     rig_stirrer_task = None
 
+    queued_at = time.monotonic()
     try:
-        await run_rig_stirrer(duration_s)
+        async with automation_lock:
+            queued_wait_s = time.monotonic() - queued_at
+            started_at = time.monotonic()
+            logging.info(
+                "automation stir start duration_s=%.3f queued_wait_s=%.3f",
+                duration_s,
+                queued_wait_s,
+            )
+            await run_rig_stirrer(duration_s)
+            run_s = time.monotonic() - started_at
+            logging.info(
+                "automation stir done duration_s=%.3f run_s=%.3f",
+                duration_s,
+                run_s,
+            )
     except Exception as exc:
         logging.exception("automation stir failed duration_s=%s", duration_s)
         await send_error(websocket, f"stir_failed:{exc}")
@@ -877,19 +904,30 @@ async def handle_automation_stir(websocket: Any, data: dict[str, Any]) -> None:
 
 
 async def handle_automation_cleanup(websocket: Any, data: dict[str, Any]) -> None:
-    if automation_lock.locked():
-        await send_error(websocket, "automation_busy")
-        return
-
     try:
         move_ms = parse_xarm_move_ms(data.get("moveMs"))
     except ValueError as exc:
         await send_error(websocket, str(exc))
         return
 
+    queued_at = time.monotonic()
     try:
         async with automation_lock:
+            queued_wait_s = time.monotonic() - queued_at
+            started_at = time.monotonic()
+            logging.info(
+                "automation cleanup start move_ms=%s queued_wait_s=%.3f",
+                move_ms,
+                queued_wait_s,
+            )
             steps = await run_cleanup(move_ms)
+            run_s = time.monotonic() - started_at
+            logging.info(
+                "automation cleanup done move_ms=%s steps=%s run_s=%.3f",
+                move_ms,
+                steps,
+                run_s,
+            )
     except Exception as exc:
         logging.exception("automation cleanup failed move_ms=%s", move_ms)
         await send_error(websocket, f"cleanup_failed:{exc}")
