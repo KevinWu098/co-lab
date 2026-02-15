@@ -1,6 +1,20 @@
-import { DropletsIcon, RefreshCwIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
+"use client";
+
+import {
+  CheckIcon,
+  DropletsIcon,
+  RefreshCwIcon,
+  RotateCcwIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useMemo } from "react";
-import { computeAllSpins, type ProcedureStep, reagentLabels } from "@/lib/schemas/procedure";
+import { useHardwareContext } from "@/lib/hardware/hardware-provider";
+import {
+  computeAllSpins,
+  type ProcedureStep,
+  reagentLabels,
+} from "@/lib/schemas/procedure";
+import { cn } from "@/lib/utils";
 
 const ACTION_META: Record<string, { label: string; icon: typeof DropletsIcon }> = {
   dispense: { label: "Dispense", icon: DropletsIcon },
@@ -10,6 +24,10 @@ const ACTION_META: Record<string, { label: string; icon: typeof DropletsIcon }> 
 
 export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
   const spinMap = useMemo(() => computeAllSpins(steps), [steps]);
+  const { execution } = useHardwareContext();
+
+  const isRunning = execution.status === "running";
+  const isCompleted = execution.status === "completed";
 
   if (steps.length === 0) {
     return (
@@ -26,22 +44,80 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
         const Icon = meta.icon;
         const spins = spinMap.get(step.id);
 
+        // Determine step state relative to execution
+        const isActive = isRunning && index === execution.currentStep;
+        const isDone =
+          isCompleted ||
+          (isRunning && index < execution.currentStep);
+
         return (
           <div
-            className="bg-background border-x border-t last:border-b"
+            className={cn(
+              "border-x border-t transition-colors duration-300 last:border-b",
+              isActive
+                ? "border-emerald-500/50 bg-emerald-500/10"
+                : isDone
+                  ? "border-emerald-500/20 bg-emerald-500/5"
+                  : "bg-background",
+            )}
             key={step.id}
           >
             <div className="flex items-center gap-2 px-3.5 py-2.5">
-              <span className="text-muted-foreground w-5 text-left font-mono text-xs tabular-nums">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <Icon className="text-muted-foreground size-3.5" />
-              <span className="font-mono text-xs font-medium tracking-wider uppercase">
+              {/* Step number / status indicator */}
+              {isDone ? (
+                <span className="flex size-5 items-center justify-center">
+                  <CheckIcon className="size-3.5 text-emerald-500" />
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    "w-5 text-left font-mono text-xs tabular-nums",
+                    isActive ? "font-bold text-emerald-600" : "text-muted-foreground",
+                  )}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              )}
+
+              <Icon
+                className={cn(
+                  "size-3.5",
+                  isActive
+                    ? "text-emerald-600"
+                    : isDone
+                      ? "text-emerald-500/70"
+                      : "text-muted-foreground",
+                )}
+              />
+              <span
+                className={cn(
+                  "font-mono text-xs font-medium uppercase tracking-wider",
+                  isActive && "text-emerald-700 dark:text-emerald-400",
+                  isDone && "text-emerald-600/70 dark:text-emerald-500/70",
+                )}
+              >
                 {meta.label}
               </span>
               {step.action.type === "dispense" && step.action.reagent && (
-                <span className="text-muted-foreground font-mono text-xs">
+                <span
+                  className={cn(
+                    "font-mono text-xs",
+                    isActive
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground",
+                  )}
+                >
                   {reagentLabels[step.action.reagent].formula}
+                </span>
+              )}
+
+              {/* Running indicator */}
+              {isActive && (
+                <span className="ml-auto flex items-center gap-1.5">
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                  </span>
                 </span>
               )}
             </div>
@@ -50,14 +126,19 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
               <div className="border-t border-dashed px-3.5 py-2">
                 {spins.map((spin, i) => (
                   <div
-                    className="text-muted-foreground flex items-center gap-2 py-0.5"
+                    className={cn(
+                      "flex items-center gap-2 py-0.5",
+                      isActive
+                        ? "text-emerald-600/80 dark:text-emerald-400/80"
+                        : "text-muted-foreground",
+                    )}
                     key={`${spin.from}-${spin.to}-${i}`}
                   >
                     <RotateCcwIcon className="size-3 shrink-0" />
                     <span className="font-mono text-xs">
                       Spin {reagentLabels[spin.from].formula} &rarr;{" "}
                       {reagentLabels[spin.to].formula}
-                      <span className="text-muted-foreground/50 ml-1">
+                      <span className="ml-1 opacity-50">
                         ({spin.degrees > 0 ? "+" : ""}
                         {spin.degrees}&deg;)
                       </span>
@@ -69,7 +150,14 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
 
             <div className="border-t px-3.5 py-2.5">
               {step.action.type === "dispense" && (
-                <span className="text-muted-foreground font-mono text-xs">
+                <span
+                  className={cn(
+                    "font-mono text-xs",
+                    isActive
+                      ? "text-emerald-600/80 dark:text-emerald-400/80"
+                      : "text-muted-foreground",
+                  )}
+                >
                   {step.action.amount ?? "—"} {step.action.unit ?? "mL"}
                   {step.action.reagent
                     ? ` of ${reagentLabels[step.action.reagent].name}`
@@ -77,12 +165,26 @@ export function ProcedureStepList({ steps }: { steps: ProcedureStep[] }) {
                 </span>
               )}
               {step.action.type === "stir" && (
-                <span className="text-muted-foreground font-mono text-xs">
+                <span
+                  className={cn(
+                    "font-mono text-xs",
+                    isActive
+                      ? "text-emerald-600/80 dark:text-emerald-400/80"
+                      : "text-muted-foreground",
+                  )}
+                >
                   {step.action.duration ?? "—"} {step.action.unit ?? "s"}
                 </span>
               )}
               {step.action.type === "cleanup" && (
-                <span className="text-muted-foreground font-mono text-xs">
+                <span
+                  className={cn(
+                    "font-mono text-xs",
+                    isActive
+                      ? "text-emerald-600/80 dark:text-emerald-400/80"
+                      : "text-muted-foreground",
+                  )}
+                >
                   Remove current materials and replace with a fresh flask.
                 </span>
               )}

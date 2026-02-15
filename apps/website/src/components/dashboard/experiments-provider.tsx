@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
 import { experiments as initialExperiments } from "@/components/dashboard/sidebar/data";
 import type { Experiment } from "@/components/dashboard/sidebar/types";
 
@@ -28,9 +28,7 @@ export function ExperimentsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateExperiment = useCallback((id: string, updates: Partial<Omit<Experiment, "id">>) => {
-    setExperiments((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, ...updates } : e)),
-    );
+    setExperiments((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
   }, []);
 
   return (

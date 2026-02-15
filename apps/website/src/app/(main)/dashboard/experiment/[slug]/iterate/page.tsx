@@ -1,19 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  ArrowLeftIcon,
-  BotIcon,
-  ClipboardListIcon,
-  ScrollTextIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, BotIcon, ClipboardListIcon, ScrollTextIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ProcedureDiff } from "@/components/co-lab/dashboard/procedure-diff";
 import {
   ProcedureEditor,
   type ProcedureSuggestion,
 } from "@/components/co-lab/dashboard/procedure-editor";
-import { ProcedureDiff } from "@/components/co-lab/dashboard/procedure-diff";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
 import {
   Accordion,
@@ -41,13 +36,10 @@ export default function IteratePage() {
   const suggestionsRequested = useRef(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | undefined>();
 
-  const handleSuggestionClick = useCallback(
-    (suggestion: ProcedureSuggestion) => {
-      setPendingPrompt(suggestion.description);
-      setSuggestions([]);
-    },
-    [],
-  );
+  const handleSuggestionClick = useCallback((suggestion: ProcedureSuggestion) => {
+    setPendingPrompt(suggestion.description);
+    setSuggestions([]);
+  }, []);
 
   const previousSteps = experiment?.procedure ?? [];
 
@@ -185,7 +177,12 @@ export default function IteratePage() {
           >
             Cancel
           </Button>
-          <Button className="rounded-l-none border-l-0" disabled={agentLoading} onClick={handleConfirm} size="sm">
+          <Button
+            className="rounded-l-none border-l-0"
+            disabled={agentLoading}
+            onClick={handleConfirm}
+            size="sm"
+          >
             Confirm iteration
           </Button>
         </div>
@@ -300,7 +297,6 @@ export default function IteratePage() {
           </Accordion>
         </motion.div>
       )}
-
     </div>
   );
 }

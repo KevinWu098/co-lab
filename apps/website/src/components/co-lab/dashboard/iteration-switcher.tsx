@@ -3,6 +3,8 @@
 import {
   BotIcon,
   BotOffIcon,
+  LayoutGridIcon,
+  RowsIcon,
   PlusIcon,
   SquareIcon,
   ZapIcon,
@@ -22,16 +24,22 @@ import {
 import { useHardwareContext } from "@/lib/hardware/hardware-provider";
 import { runProcedure } from "@/lib/hardware/procedure-runner";
 
+export type ContentLayout = "row" | "grid";
+
 interface IterationSwitcherProps {
   experiment: Experiment;
   chatVisible?: boolean;
   onToggleChat?: () => void;
+  layout?: ContentLayout;
+  onToggleLayout?: () => void;
 }
 
 export function IterationSwitcher({
   experiment,
   chatVisible = true,
   onToggleChat,
+  layout = "row",
+  onToggleLayout,
 }: IterationSwitcherProps) {
   const iterations = experiment.iterations;
   const { updateExperiment } = useExperiments();
@@ -184,6 +192,21 @@ export function IterationSwitcher({
               New iteration
             </Button>
           </>
+        )}
+        {iterations.length > 0 && (
+          <Button
+            aria-label={layout === "row" ? "Grid view" : "Row view"}
+            className="rounded-none border-l-0"
+            onClick={onToggleLayout}
+            size="sm"
+            variant="outline"
+          >
+            {layout === "row" ? (
+              <LayoutGridIcon className="size-4" />
+            ) : (
+              <RowsIcon className="size-4" />
+            )}
+          </Button>
         )}
         <Button
           aria-label={chatVisible ? "Hide chat" : "Show chat"}

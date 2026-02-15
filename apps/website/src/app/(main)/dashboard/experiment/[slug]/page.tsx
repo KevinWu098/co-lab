@@ -5,13 +5,17 @@ import { nanoid } from "nanoid";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Chat } from "@/components/co-lab/dashboard/chat";
+import { ContentGrid } from "@/components/co-lab/dashboard/content-grid";
 import { ContentPanels } from "@/components/co-lab/dashboard/content-panels";
 import { DataCard } from "@/components/co-lab/dashboard/data-card";
 import { EquipmentStatus } from "@/components/co-lab/dashboard/equipment-status";
-import { IterationSwitcher } from "@/components/co-lab/dashboard/iteration-switcher";
+import {
+  IterationSwitcher,
+  type ContentLayout,
+} from "@/components/co-lab/dashboard/iteration-switcher";
+import type { SetupResult } from "@/components/co-lab/dashboard/new-experiment-setup";
 import { NewExperimentSetup } from "@/components/co-lab/dashboard/new-experiment-setup";
 import { useExperiments } from "@/components/dashboard/experiments-provider";
-import type { SetupResult } from "@/components/co-lab/dashboard/new-experiment-setup";
 import { useHardwareContext } from "@/lib/hardware/hardware-provider";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +28,7 @@ export default function ExperimentPage() {
   const [chatExpanded, setChatExpanded] = useState(false);
   const hasIterations = experiment ? experiment.iterations.length > 0 : false;
   const [chatVisible, setChatVisible] = useState(hasIterations);
+  const [contentLayout, setContentLayout] = useState<ContentLayout>("row");
 
   // Live telemetry from hardware
   const { telemetry, state: hwState } = useHardwareContext();
@@ -59,7 +64,7 @@ export default function ExperimentPage() {
       });
       setChatVisible(true);
     },
-    [experiment, updateExperiment]
+    [experiment, updateExperiment],
   );
 
   const router = useRouter();
@@ -75,9 +80,7 @@ export default function ExperimentPage() {
   }
 
   return (
-    <div
-      className={`flex min-h-0 flex-1 flex-row gap-4 py-4 ${chatVisible ? "" : "pr-4"}`}
-    >
+    <div className={`flex min-h-0 flex-1 flex-row gap-4 py-4 ${chatVisible ? "" : "pr-4"}`}>
       {!chatExpanded && (
         <div className="flex min-h-0 w-full flex-1 flex-col gap-4">
           <motion.div
@@ -88,7 +91,11 @@ export default function ExperimentPage() {
             <IterationSwitcher
               chatVisible={chatVisible}
               experiment={experiment}
+              layout={contentLayout}
               onToggleChat={() => setChatVisible((v) => !v)}
+              onToggleLayout={() =>
+                setContentLayout((v) => (v === "row" ? "grid" : "row"))
+              }
             />
           </motion.div>
 
@@ -100,25 +107,13 @@ export default function ExperimentPage() {
                 initial={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.35, delay: 0.05, ease }}
               >
-                <DataCard
-                  title="Temperature"
-                  unit="°C"
-                  values={tempValues}
-                />
-                <DataCard
-                  title="Dispensed Volume"
-                  unit="mL"
-                  values={volumeValues}
-                />
+                <DataCard title="Temperature" unit="°C" values={tempValues} />
+                <DataCard title="Dispensed Volume" unit="mL" values={volumeValues} />
                 <DataCard
                   last
                   title="Thermal FPS"
                   unit="fps"
-                  values={
-                    hwState.thermal.fps != null
-                      ? [Math.round(hwState.thermal.fps)]
-                      : []
-                  }
+                  values={hwState.thermal.fps != null ? [Math.round(hwState.thermal.fps)] : []}
                 />
               </motion.div>
 
@@ -128,7 +123,11 @@ export default function ExperimentPage() {
                 initial={{ opacity: 0, y: 30 }}
                 transition={{ duration: 0.4, delay: 0.1, ease }}
               >
-                <ContentPanels procedure={experiment.procedure} />
+                {contentLayout === "grid" ? (
+                  <ContentGrid procedure={experiment.procedure} />
+                ) : (
+                  <ContentPanels procedure={experiment.procedure} />
+                )}
               </motion.div>
 
               <motion.div
@@ -159,10 +158,7 @@ export default function ExperimentPage() {
           initial={{ opacity: 0, x: 40 }}
           transition={{ duration: 0.4, delay: 0.08, ease }}
         >
-          <Chat
-            expanded={chatExpanded}
-            onToggleExpand={() => setChatExpanded((v) => !v)}
-          />
+          <Chat expanded={chatExpanded} onToggleExpand={() => setChatExpanded((v) => !v)} />
         </motion.div>
       )}
     </div>

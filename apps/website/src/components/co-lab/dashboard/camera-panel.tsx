@@ -27,10 +27,10 @@ export function CameraPanel() {
   const httpBase = useMemo(() => deriveHttpBaseUrl(wsUrl), [wsUrl]);
 
   const [selected, setSelected] = useState<Set<CameraId>>(new Set(["webcam"]));
-  const [streamNonces, setStreamNonces] = useState<Record<CameraId, number>>({
-    webcam: 0,
-    thermal: 0,
-  });
+  const [streamNonces, setStreamNonces] = useState<Record<CameraId, number>>(() => ({
+    webcam: Date.now(),
+    thermal: Date.now(),
+  }));
   const [streamErrors, setStreamErrors] = useState<Record<CameraId, boolean>>({
     webcam: false,
     thermal: false,
