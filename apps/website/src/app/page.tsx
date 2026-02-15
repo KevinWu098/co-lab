@@ -1,6 +1,5 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Background } from "@/components/co-lab/dashboard/background";
 import { FoldReveal } from "@/components/co-lab/fold-reveal";
 import { ImageLightbox } from "@/components/co-lab/image-lightbox";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,14 @@ export default function Home() {
       {/* Content — scrolls over the fold */}
       <div className="relative z-10 bg-white">
         {/* Hero — shader background (dark) */}
-        <section className="dark relative flex h-svh">
-          <Background />
+        <section className="dark relative flex h-svh bg-black">
+          {/* Static dithered background — no client JS needed */}
+          {/* biome-ignore lint/performance/noImgElement: server-rendered hero bg */}
+          <img
+            src="/background-dither-placeholder.png"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-50 brightness-125"
+          />
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent_25%,rgba(0,0,0,0.95))]" />
           <div className="relative mt-auto mr-auto pb-10 pl-10 mix-blend-exclusion">
             <h1 className="text-[14rem] leading-none font-bold tracking-tighter text-white">

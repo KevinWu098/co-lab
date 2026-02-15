@@ -329,8 +329,12 @@ export function useHardware(): UseHardwareReturn {
     wsRef.current = null;
   }, []);
 
-  // Auto-connect on mount and when wsUrl changes
+  // Auto-connect on mount and when wsUrl changes.
+  // Skip in production (HTTPS) — insecure WS connections are blocked by browsers.
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.protocol === "https:") {
+      return;
+    }
     connect();
     return () => {
       wsRef.current?.close();
