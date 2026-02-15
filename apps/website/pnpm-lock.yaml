@@ -11,6 +11,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: ^3.0.44
         version: 3.0.44(zod@4.3.6)
+      '@ai-sdk/gateway':
+        specifier: ^3.0.46
+        version: 3.0.46(zod@4.3.6)
       '@ai-sdk/react':
         specifier: ^3.0.88
         version: 3.0.88(react@19.2.3)(zod@4.3.6)

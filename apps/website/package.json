@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.44",
+    "@ai-sdk/gateway": "^3.0.46",
     "@ai-sdk/react": "^3.0.88",
     "@base-ui/react": "^1.2.0",
     "@hookform/resolvers": "^5.2.2",
